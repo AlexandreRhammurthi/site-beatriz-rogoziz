@@ -192,6 +192,7 @@ const header = document.querySelector("[data-header]");
 const fab = document.querySelector("[data-fab]");
 const heroEl = document.querySelector("#inicio");
 const menuToggle = document.querySelector("[data-menu-toggle]");
+const backToTop = document.querySelector("[data-back-to-top]");
 const nav = document.querySelector("[data-nav]");
 
 const closeMenu = () => {
@@ -219,6 +220,12 @@ menuToggle?.addEventListener("click", () => {
   const open = menuToggle.getAttribute("aria-expanded") === "true";
   menuToggle.setAttribute("aria-expanded", String(!open));
   document.body.classList.toggle("nav-open", !open);
+});
+
+backToTop?.addEventListener("click", () => {
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+  closeMenu();
 });
 
 nav?.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));

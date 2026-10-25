@@ -34,6 +34,7 @@ img, video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .nav a:hover::after, .nav a:focus-visible::after { transform: scaleX(1); transform-origin: left; }
 .nav-book { border: 1px solid rgba(216,194,143,.72); padding: .8rem 1.1rem; background: transparent; color: white; cursor: pointer; letter-spacing: .13em; text-transform: uppercase; }
 .menu-toggle { display: none; border: 0; background: transparent; color: white; }
+.back-to-top { display: none; }
 
 .hero { position: relative; min-height: 100svh; display: grid; place-items: center; overflow: hidden; background: var(--petrol-deep); color: white; }
 .hero-video, .hero-shade { position: absolute; inset: 0; }
@@ -167,8 +168,12 @@ h2 { font-size: clamp(2.8rem, 5.5vw, 5.5rem); }
 
 @media (max-width: 980px) {
   .header { min-height: 78px; }
-  .menu-toggle { position: relative; z-index: 10000; display: grid; gap: 8px; width: 42px; padding: 10px 5px; cursor: pointer; opacity: 1; visibility: visible; transition: opacity .3s ease, visibility .3s ease; }
+  .menu-toggle { position: absolute; z-index: 10000; top: 50%; right: clamp(1.25rem, 5vw, 5.5rem); display: grid; gap: 8px; width: 42px; padding: 10px 5px; cursor: pointer; opacity: 1; visibility: visible; transform: translateY(-50%); transition: opacity .3s ease, visibility .3s ease; }
   body.past-hero .menu-toggle { opacity: 0; visibility: hidden; pointer-events: none; }
+  .back-to-top { position: absolute; z-index: 10000; top: 50%; right: clamp(1.25rem, 5vw, 5.5rem); display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid rgba(216,194,143,.58); border-radius: 50%; background: rgba(6,43,44,.34); color: var(--gold-light); cursor: pointer; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-42%); transition: opacity .3s ease, visibility .3s ease, transform .3s ease, border-color .25s, background .25s; backdrop-filter: blur(8px); }
+  .back-to-top svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; }
+  body.past-hero .back-to-top { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(-50%); }
+  .back-to-top:hover, .back-to-top:focus-visible { border-color: var(--gold-light); background: rgba(6,43,44,.78); outline: none; }
   .menu-toggle span { display: block; width: 100%; height: 1px; background: currentColor; transition: transform .25s; }
   .nav-open .menu-toggle span:first-child { transform: translateY(4.5px) rotate(45deg); }
   .nav-open .menu-toggle span:last-child { transform: translateY(-4.5px) rotate(-45deg); }
