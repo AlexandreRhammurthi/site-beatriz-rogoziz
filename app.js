@@ -66,14 +66,32 @@ if (menuCardContainer) {
 }
 
 const header = document.querySelector("[data-header]");
-const onScroll = () => header?.classList.toggle("scrolled", window.scrollY > 32);
-onScroll();
-window.addEventListener("scroll", onScroll, { passive: true });
-
 const fab = document.querySelector("[data-fab]");
-const onScrollFab = () => fab?.classList.toggle("visible", window.scrollY > 380);
-onScrollFab();
-window.addEventListener("scroll", onScrollFab, { passive: true });
+const heroEl = document.querySelector("#inicio");
+
+const onScrollAll = () => {
+  const scrollY = window.scrollY;
+
+  // Header style
+  header?.classList.toggle("scrolled", scrollY > 32);
+
+  // Floating WhatsApp button
+  fab?.classList.toggle("visible", scrollY > 380);
+
+  // Hamburger only visible in hero section
+  if (heroEl) {
+    const pastHero = heroEl.getBoundingClientRect().bottom <= 60;
+    document.body.classList.toggle("past-hero", pastHero);
+  }
+
+  // Close menu on any scroll
+  if (document.body.classList.contains("nav-open")) {
+    closeMenu();
+  }
+};
+
+onScrollAll();
+window.addEventListener("scroll", onScrollAll, { passive: true });
 
 const menuToggle = document.querySelector("[data-menu-toggle]");
 const nav = document.querySelector("[data-nav]");
