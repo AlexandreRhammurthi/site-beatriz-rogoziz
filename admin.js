@@ -176,6 +176,16 @@ document.querySelector("[data-resend]")?.addEventListener("click", async (event)
   showStatus("Novo e-mail enviado. Abra o link recebido para concluir a confirmação.");
 });
 
+document.querySelector("[data-toggle-password]")?.addEventListener("click", (event) => {
+  const button = event.currentTarget;
+  const input = button.closest(".password-control").querySelector("input");
+  const willShow = input.type === "password";
+  input.type = willShow ? "text" : "password";
+  button.textContent = willShow ? "Ocultar" : "Mostrar";
+  button.setAttribute("aria-label", willShow ? "Ocultar senha" : "Mostrar senha");
+  button.setAttribute("aria-pressed", String(willShow));
+});
+
 document.querySelector("[data-claim-form]")?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = event.submitter;
