@@ -1,6 +1,6 @@
 # Studio B — Beatriz Rogoziz
 
-Site institucional responsivo, criado em HTML, CSS e JavaScript sem dependências de instalação.
+Site institucional responsivo, criado em HTML, CSS e JavaScript, com serviços e valores gerenciados pelo Supabase.
 
 ## Executar localmente
 
@@ -11,6 +11,26 @@ python -m http.server 8080
 ```
 
 Depois acesse `http://localhost:8080`.
+
+## Painel administrativo
+
+O painel está disponível em `admin.html`. No primeiro acesso:
+
+1. crie uma conta com e-mail e senha;
+2. informe o código único de ativação fornecido separadamente;
+3. cadastre, edite, oculte ou remova serviços, sessões e pacotes.
+
+Cada opção de preço pode receber um valor numérico ou um texto como “A consultar”. Também é possível marcá-la como promocional e informar o valor anterior. As mudanças salvas aparecem automaticamente no site público.
+
+O frontend usa somente a chave pública do Supabase. As alterações são protegidas por autenticação e Row Level Security; nenhuma chave administrativa fica no site.
+
+## Banco de dados
+
+As tabelas, regras de acesso e dados iniciais estão versionados em `supabase/migrations/`. Para aplicar as migrações em um projeto previamente vinculado pela CLI:
+
+```powershell
+npx supabase db push
+```
 
 ## Configurar o WhatsApp
 
@@ -32,7 +52,10 @@ Não foram adicionados endereço, telefone, credenciais ou depoimentos não forn
 
 - `index.html`: estrutura e conteúdo;
 - `styles.css`: identidade visual e responsividade;
-- `app.js`: navegação, animações, renderização de serviços e menu de cuidados;
-- `config.js`: número e mensagem do WhatsApp, descrições e menu de cuidados;
+- `app.js`: navegação, animações e leitura dos serviços publicados no Supabase;
+- `admin.html`, `admin.css` e `admin.js`: painel autenticado de gestão;
+- `supabase-config.js`: URL e chave pública de conexão;
+- `config.js`: número e mensagem do WhatsApp, além do conteúdo de fallback;
+- `supabase/`: configuração local e migrações do banco;
 - `assets/`: fotos e vídeo originais enviados.
 

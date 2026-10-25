@@ -137,6 +137,10 @@ h2 { font-size: clamp(2.8rem, 5.5vw, 5.5rem); }
 .menu-card-price-row { display: flex; align-items: baseline; gap: .65rem; font-size: .78rem; color: var(--ink); }
 .menu-card-dots { flex: 1; border-bottom: 1px solid rgba(183, 154, 93, .35); height: 0; margin-bottom: .25rem; }
 .menu-card-price-row strong { font-family: var(--serif); font-size: 1.15rem; font-weight: 500; color: var(--petrol-deep); }
+.menu-card-price-label { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .35rem; text-align: left; }
+.promo-badge { padding: .2rem .35rem; border: 1px solid rgba(183, 154, 93, .55); color: #8c713b; font-size: .48rem; font-weight: 600; letter-spacing: .06em; line-height: 1; text-transform: uppercase; }
+.menu-card-price-value { display: inline-flex; align-items: baseline; gap: .4rem; white-space: nowrap; }
+.menu-card-price-value s { color: var(--muted); font-size: .68rem; }
 .menu-card-footer { display: flex; align-items: center; justify-content: center; gap: .8rem; margin-top: 1.8rem; padding-top: .4rem; }
 .menu-card-footer p { margin: 0; color: var(--muted); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
 

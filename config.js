@@ -49,8 +49,8 @@ window.STUDIO_B = {
       description: "Higienização profunda com extração cuidadosa, desobstrução dos poros e hidratação intensa, devolvendo viço, frescor e equilíbrio natural à pele.",
       whatsappMessage: "Olá, Beatriz! Gostaria de agendar uma sessão de Limpeza de Pele no Studio B. Quais os horários disponíveis?",
       options: [
-        ["Sessão (valor promocional)", "R$ 145,00"],
-        ["Pacotes", "A consultar"]
+        { label: "Sessão", price_amount: 145, is_promotional: true },
+        { label: "Pacotes", custom_value: "A consultar", is_promotional: false }
       ]
     }
   ]

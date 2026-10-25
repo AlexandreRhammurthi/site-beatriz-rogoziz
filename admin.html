@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#082f30" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Painel administrativo | Studio B</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="admin.css?v=1" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="supabase-config.js?v=1" defer></script>
+    <script src="admin.js?v=1" defer></script>
+  </head>
+  <body>
+    <header class="admin-header">
+      <a class="admin-brand" href="index.html" aria-label="Voltar ao site">
+        <span>BEATRIZ</span>
+        <small>STUDIO B</small>
+      </a>
+      <div class="header-actions">
+        <a href="index.html">Ver site</a>
+        <button class="link-button" type="button" data-logout hidden>Sair</button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <section class="auth-panel" data-auth-panel>
+        <p class="eyebrow">Área restrita</p>
+        <h1>Gestão do Menu de Cuidados</h1>
+        <p>Entre com seu e-mail e senha. No primeiro acesso, crie uma conta e informe o código de ativação.</p>
+        <form data-auth-form>
+          <label>E-mail<input type="email" name="email" autocomplete="email" required /></label>
+          <label>Senha<input type="password" name="password" autocomplete="current-password" minlength="6" required /></label>
+          <div class="auth-actions">
+            <button class="button primary" type="submit" data-signin>Entrar</button>
+            <button class="button secondary" type="button" data-signup>Criar conta</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="claim-panel" data-claim-panel hidden>
+        <p class="eyebrow">Primeiro acesso</p>
+        <h1>Ativar administração</h1>
+        <p>Esta conta ainda não administra o Studio B. Informe o código único de ativação.</p>
+        <form data-claim-form>
+          <label>Código de ativação<input type="password" name="code" autocomplete="one-time-code" required /></label>
+          <button class="button primary" type="submit">Ativar painel</button>
+        </form>
+      </section>
+
+      <section class="dashboard" data-dashboard hidden>
+        <div class="dashboard-heading">
+          <div>
+            <p class="eyebrow">Conteúdo do site</p>
+            <h1>Serviços e valores</h1>
+            <p>As alterações salvas aqui aparecem automaticamente no site.</p>
+          </div>
+          <button class="button primary" type="button" data-add-service>Adicionar serviço</button>
+        </div>
+        <div class="services-list" data-services-list></div>
+      </section>
+
+      <p class="status" role="status" aria-live="polite" data-status></p>
+    </main>
+
+    <template id="price-row-template">
+      <div class="price-row" data-price-row>
+        <label class="wide">Nome da opção<input type="text" data-price-field="label" placeholder="Ex.: Sessão avulsa" required /></label>
+        <label>Valor (R$)<input type="number" data-price-field="price_amount" min="0" step="0.01" placeholder="99,00" /></label>
+        <label>Texto alternativo<input type="text" data-price-field="custom_value" placeholder="Ex.: A consultar" /></label>
+        <label>Valor anterior (R$)<input type="number" data-price-field="original_price" min="0" step="0.01" /></label>
+        <label class="check"><input type="checkbox" data-price-field="is_promotional" /> Promocional</label>
+        <label class="check"><input type="checkbox" data-price-field="is_active" checked /> Visível</label>
+        <button class="remove-price" type="button" data-remove-price aria-label="Remover esta opção">Remover</button>
+      </div>
+    </template>
+  </body>
+</html>
