@@ -205,8 +205,8 @@ const onScrollAll = () => {
   fab?.classList.toggle("visible", scrollY > 380);
 
   if (heroEl) {
-    const pastHero = heroEl.getBoundingClientRect().bottom <= 60;
-    document.body.classList.toggle("past-hero", pastHero);
+    const firstSectionAtTop = heroEl.getBoundingClientRect().top >= -12;
+    document.body.classList.toggle("past-hero", !firstSectionAtTop);
   }
 
   if (document.body.classList.contains("nav-open")) closeMenu();
