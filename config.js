@@ -40,6 +40,18 @@ window.STUDIO_B = {
         ["Pacote com 4 sessões", "R$ 333,00"],
         ["Pacote com 8 sessões", "R$ 660,00"]
       ]
+    },
+    {
+      number: "04",
+      name: "Limpeza de pele",
+      subtitle: "Renovação e cuidado facial profundo",
+      duration: "",
+      description: "Higienização profunda com extração cuidadosa, desobstrução dos poros e hidratação intensa, devolvendo viço, frescor e equilíbrio natural à pele.",
+      whatsappMessage: "Olá, Beatriz! Gostaria de agendar uma sessão de Limpeza de Pele no Studio B. Quais os horários disponíveis?",
+      options: [
+        ["Sessão (valor promocional)", "R$ 145,00"],
+        ["Pacotes", "A consultar"]
+      ]
     }
   ]
 };

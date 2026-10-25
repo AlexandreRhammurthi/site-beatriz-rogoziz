@@ -23,6 +23,7 @@ Enquanto o número estiver vazio, os botões informam que o WhatsApp ainda não 
 - Drenagem linfática: sessão avulsa R$ 99,00; 5 sessões R$ 399,00; 10 sessões R$ 699,00.
 - Relax com aromaterapia: 1 hora; sessão avulsa R$ 99,00; 5 sessões R$ 333,00.
 - Fitness/modeladora: 40 minutos; sessão avulsa R$ 99,00; 4 sessões R$ 333,00; 8 sessões R$ 660,00.
+- Limpeza de pele: sessão valor promocional R$ 145,00; pacotes a consultar.
 - Agendamentos mediante disponibilidade.
 
 Não foram adicionados endereço, telefone, credenciais ou depoimentos não fornecidos.
