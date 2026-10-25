@@ -23,12 +23,13 @@ img, video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .skip-link { position: fixed; z-index: 999; top: -100px; left: 1rem; padding: .8rem 1rem; background: white; color: var(--petrol); }
 .skip-link:focus { top: 1rem; }
 
-.header { position: fixed; z-index: 100; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; min-height: 94px; padding: 0 clamp(1.25rem, 5vw, 5.5rem); color: white; transition: min-height .35s, background .35s, box-shadow .35s; }
+.header { position: fixed; z-index: 200; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; min-height: 94px; padding: 0 clamp(1.25rem, 5vw, 5.5rem); color: white; transition: min-height .35s, background .35s, box-shadow .35s; }
 .header.scrolled { min-height: 72px; background: rgba(6,43,44,.95); box-shadow: 0 10px 35px rgba(0,0,0,.13); backdrop-filter: blur(14px); }
+.header.scrolled + .nav { height: 72px; }
 .mini-brand { display: grid; justify-items: center; line-height: 1; letter-spacing: .14em; }
 .mini-brand span { font-family: var(--serif); font-size: 1.55rem; font-weight: 500; }
 .mini-brand small { margin-top: .3rem; font-size: .47rem; letter-spacing: .5em; transform: translateX(.2em); }
-.nav { display: flex; align-items: center; gap: clamp(1.15rem, 2.2vw, 2.6rem); font-size: .66rem; font-weight: 500; letter-spacing: .13em; text-transform: uppercase; }
+.nav { position: fixed; z-index: 201; top: 0; right: 0; display: flex; align-items: center; height: 94px; padding: 0 clamp(1.25rem, 5vw, 5.5rem); gap: clamp(1.15rem, 2.2vw, 2.6rem); font-size: .66rem; font-weight: 500; letter-spacing: .13em; text-transform: uppercase; color: white; transition: height .35s; }
 .nav a { position: relative; padding: .5rem 0; }
 .nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--gold-light); transform: scaleX(0); transform-origin: right; transition: transform .25s; }
 .nav a:hover::after, .nav a:focus-visible::after { transform: scaleX(1); transform-origin: left; }
@@ -161,7 +162,7 @@ h2 { font-size: clamp(2.8rem, 5.5vw, 5.5rem); }
 
 @media (max-width: 980px) {
   .header { min-height: 78px; }
-  .menu-toggle { z-index: 3; display: grid; gap: 8px; width: 42px; padding: 10px 5px; cursor: pointer; }
+  .menu-toggle { z-index: 202; display: grid; gap: 8px; width: 42px; padding: 10px 5px; cursor: pointer; }
   .menu-toggle span { display: block; width: 100%; height: 1px; background: currentColor; transition: transform .25s; }
   .nav-open .menu-toggle span:first-child { transform: translateY(4.5px) rotate(45deg); }
   .nav-open .menu-toggle span:last-child { transform: translateY(-4.5px) rotate(-45deg); }
