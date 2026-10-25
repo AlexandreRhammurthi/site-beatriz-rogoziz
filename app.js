@@ -23,12 +23,8 @@ if (servicesContainer) {
         <p class="service-duration">${service.duration ? escapeHTML(service.duration) : "&nbsp;"}</p>
         ${service.description ? `<p class="service-description">${escapeHTML(service.description)}</p>` : ""}
       </div>
-      <div class="service-prices">
-        ${(service.options || []).map(([label, price]) => `
-          <div class="price-line">
-            <span>${escapeHTML(label)}</span><i></i><strong>${escapeHTML(price)}</strong>
-          </div>
-        `).join("")}
+      <div class="service-card-footer">
+        <a href="#menu-cuidados" class="service-view-prices">Consultar valores no Menu <span>↘</span></a>
       </div>
     </article>
   `).join("");
