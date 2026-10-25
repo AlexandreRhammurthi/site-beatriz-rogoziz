@@ -15,6 +15,17 @@ const escapeHTML = (value = "") => String(value)
   .replaceAll("'", "&#039;");
 
 let statusTimer;
+const callbackUrl = () => `${window.location.origin}${window.location.pathname}`;
+
+const friendlyAuthError = (error) => {
+  if (!error) return "Não foi possível concluir esta ação.";
+  if (error.message === "Email not confirmed") {
+    return "E-mail ainda não confirmado. Use “Reenviar e-mail de confirmação” e abra o novo link recebido.";
+  }
+  if (error.message === "Invalid login credentials") return "E-mail ou senha incorretos.";
+  return error.message;
+};
+
 const showStatus = (message, isError = false) => {
   clearTimeout(statusTimer);
   statusElement.textContent = message;
@@ -130,7 +141,7 @@ document.querySelector("[data-auth-form]")?.addEventListener("submit", async (ev
     password: String(form.get("password"))
   });
   setBusy(button, false);
-  if (error) showStatus(error.message, true);
+  if (error) showStatus(friendlyAuthError(error), true);
 });
 
 document.querySelector("[data-signup]")?.addEventListener("click", async (event) => {
@@ -142,12 +153,27 @@ document.querySelector("[data-signup]")?.addEventListener("click", async (event)
   const { data, error } = await client.auth.signUp({
     email: String(form.get("email")).trim(),
     password: String(form.get("password")),
-    options: { emailRedirectTo: window.location.href.split("#")[0].split("?")[0] }
+    options: { emailRedirectTo: callbackUrl() }
   });
   setBusy(button, false);
-  if (error) return showStatus(error.message, true);
+  if (error) return showStatus(friendlyAuthError(error), true);
   if (!data.session) showStatus("Conta criada. Confirme o e-mail e depois entre no painel.");
   else showStatus("Conta criada. Agora informe o código de ativação.");
+});
+
+document.querySelector("[data-resend]")?.addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  const emailInput = button.closest("form").querySelector('[name="email"]');
+  if (!emailInput.reportValidity()) return;
+  setBusy(button, true);
+  const { error } = await client.auth.resend({
+    type: "signup",
+    email: emailInput.value.trim(),
+    options: { emailRedirectTo: callbackUrl() }
+  });
+  setBusy(button, false);
+  if (error) return showStatus(friendlyAuthError(error), true);
+  showStatus("Novo e-mail enviado. Abra o link recebido para concluir a confirmação.");
 });
 
 document.querySelector("[data-claim-form]")?.addEventListener("submit", async (event) => {
@@ -266,10 +292,34 @@ document.querySelector("[data-add-service]")?.addEventListener("click", async (e
   showStatus("Novo serviço criado como oculto. Preencha e salve para publicar.");
 });
 
+const processAuthCallback = async () => {
+  const url = new URL(window.location.href);
+  const queryError = url.searchParams.get("error_description");
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+  const callbackError = queryError || hash.get("error_description");
+  if (callbackError) throw new Error(decodeURIComponent(callbackError.replaceAll("+", " ")));
+
+  const tokenHash = url.searchParams.get("token_hash");
+  const type = url.searchParams.get("type");
+  const code = url.searchParams.get("code");
+  let result = null;
+
+  if (tokenHash && type) result = await client.auth.verifyOtp({ token_hash: tokenHash, type });
+  else if (code) result = await client.auth.exchangeCodeForSession(code);
+
+  if (result?.error) throw result.error;
+  if (result) {
+    window.history.replaceState({}, document.title, callbackUrl());
+    showStatus("E-mail confirmado. Acesso liberado.");
+  }
+};
+
 if (!client) {
   setView("auth");
   showStatus("A conexão com o Supabase não foi carregada.", true);
 } else {
   client.auth.onAuthStateChange((_event, session) => setTimeout(() => handleSession(session), 0));
-  client.auth.getSession().then(({ data }) => handleSession(data.session));
+  processAuthCallback()
+    .catch((error) => showStatus(`Não foi possível confirmar o e-mail: ${friendlyAuthError(error)}`, true))
+    .finally(() => client.auth.getSession().then(({ data }) => handleSession(data.session)));
 }
