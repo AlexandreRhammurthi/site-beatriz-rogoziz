@@ -45,6 +45,7 @@ Enquanto o número estiver vazio, os botões informam que o WhatsApp ainda não 
 - Fitness/modeladora: 40 minutos; sessão avulsa R$ 99,00; 4 sessões R$ 333,00; 8 sessões R$ 660,00.
 - Limpeza de pele: 40 minutos; sessão valor promocional R$ 145,00; pacotes a consultar.
 - Agendamentos mediante disponibilidade.
+- Unidade Casa Verde: Praça Delegado Amoroso Neto, 74 — Casa Verde, São Paulo — SP, CEP 02518-050.
 
 Não foram adicionados endereço, telefone, credenciais ou depoimentos não fornecidos.
 
