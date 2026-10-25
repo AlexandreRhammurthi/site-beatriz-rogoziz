@@ -170,6 +170,9 @@ h2 { font-size: clamp(2.8rem, 5.5vw, 5.5rem); }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
 @media (max-width: 1250px) and (min-width: 981px) {
+  .header { padding-inline: 1.5rem; }
+  .nav { gap: .8rem; font-size: .58rem; }
+  .nav-book { padding: .7rem .8rem; }
   .service-grid { grid-template-columns: repeat(2, 1fr); }
   .service-card:nth-child(2n) { border-right: 0; }
   .service-card:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
