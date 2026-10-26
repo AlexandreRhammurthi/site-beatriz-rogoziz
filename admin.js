@@ -264,21 +264,32 @@ document.querySelector("[data-booking-settings-form]")?.addEventListener("submit
     weekday: Number(row.querySelector('[data-rule-field="weekday"]').value),
     start_time: row.querySelector('[data-rule-field="start_time"]').value,
     end_time: row.querySelector('[data-rule-field="end_time"]').value,
+    pause_start_time: row.querySelector('[data-rule-field="pause_start_time"]').value || null,
+    pause_end_time: row.querySelector('[data-rule-field="pause_end_time"]').value || null,
     is_active: row.querySelector('[data-rule-field="is_active"]').checked
   }));
   if (rules.some((rule) => !rule.start_time || !rule.end_time || rule.start_time >= rule.end_time)) {
     return showStatus("Revise os horários de início e fim.", true);
   }
-  const activeRules = rules.filter((rule) => rule.is_active);
-  for (let index = 0; index < activeRules.length; index += 1) {
-    for (let comparison = index + 1; comparison < activeRules.length; comparison += 1) {
-      const first = activeRules[index];
-      const second = activeRules[comparison];
+  for (const rule of rules) {
+    const hasPauseStart = Boolean(rule.pause_start_time);
+    const hasPauseEnd = Boolean(rule.pause_end_time);
+    if (hasPauseStart !== hasPauseEnd) {
+      return showStatus(`Preencha o início e o fim da pausa de ${weekdayLabels[rule.weekday]}.`, true);
+    }
+    if (hasPauseStart && !(rule.start_time < rule.pause_start_time && rule.pause_start_time < rule.pause_end_time && rule.pause_end_time < rule.end_time)) {
+      return showStatus(`A pausa de ${weekdayLabels[rule.weekday]} deve ficar dentro do período de atendimento.`, true);
+    }
+  }
+  for (let index = 0; index < rules.length; index += 1) {
+    for (let comparison = index + 1; comparison < rules.length; comparison += 1) {
+      const first = rules[index];
+      const second = rules[comparison];
       if (first.weekday !== second.weekday) continue;
       if (first.start_time === second.start_time && first.end_time === second.end_time) {
         return showStatus(`Há dois períodos iguais para ${weekdayLabels[first.weekday]}. Remova ou altere um deles.`, true);
       }
-      if (first.start_time < second.end_time && second.start_time < first.end_time) {
+      if (first.is_active && second.is_active && first.start_time < second.end_time && second.start_time < first.end_time) {
         return showStatus(`Os períodos de ${weekdayLabels[first.weekday]} estão sobrepostos. Ajuste os horários.`, true);
       }
     }

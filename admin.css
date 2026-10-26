@@ -82,9 +82,10 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .connection-badge.connected { border-color: var(--petrol); background: var(--petrol); color: white; }
 .settings-grid { padding-bottom: 1rem; }
 .availability-list { display: grid; gap: .7rem; }
-.availability-row { display: grid; grid-template-columns: 1.35fr 1fr 1fr auto auto; align-items: end; gap: .7rem; padding: .9rem; background: #f4efe4; border: 1px solid var(--line); }
+.availability-row { display: grid; grid-template-columns: 1.3fr repeat(4,minmax(105px,1fr)) auto auto; align-items: end; gap: .7rem; padding: .9rem; background: #f4efe4; border: 1px solid var(--line); }
 .availability-row label { margin: 0; }
 .availability-row select { width: 100%; border: 1px solid var(--line); background: white; color: var(--ink); padding: .8rem; }
+.availability-row .optional { color: var(--muted); font-size: .52rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
 .settings-actions { display: flex; justify-content: flex-end; margin-top: 1.3rem; }
 
 @media (max-width: 900px) {

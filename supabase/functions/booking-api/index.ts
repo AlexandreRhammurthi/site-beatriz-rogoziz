@@ -248,7 +248,7 @@ const getAvailability = async (
   const weekday = weekdayForDate(dateValue);
   const { data: rules, error: rulesError } = await admin
     .from("availability_rules")
-    .select("start_time, end_time")
+    .select("start_time, end_time, pause_start_time, pause_end_time")
     .eq("weekday", weekday)
     .eq("is_active", true)
     .order("start_time");
@@ -315,6 +315,12 @@ const getAvailability = async (
       rule.end_time,
       settings.timezone,
     );
+    const pauseStart = rule.pause_start_time
+      ? zonedTimeToUtc(dateValue, rule.pause_start_time, settings.timezone)
+      : null;
+    const pauseEnd = rule.pause_end_time
+      ? zonedTimeToUtc(dateValue, rule.pause_end_time, settings.timezone)
+      : null;
     for (
       let cursor = windowStart.getTime();
       cursor < windowEnd.getTime();
@@ -324,7 +330,8 @@ const getAvailability = async (
       const end = new Date(cursor + service.duration_minutes * 60000);
       if (
         end > windowEnd || start < earliest || start > latest ||
-        overlaps(start, end, unavailable)
+        overlaps(start, end, unavailable) ||
+        (pauseStart && pauseEnd && start < pauseEnd && end > pauseStart)
       ) continue;
       slots.push({
         start: start.toISOString(),
