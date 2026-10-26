@@ -11,3 +11,7 @@ desktop.ini
 
 # Logs e temporários
 *.log
+
+# Credenciais locais
+.env
+supabase/functions/.env

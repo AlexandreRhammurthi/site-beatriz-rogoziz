@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#082f30" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Gerenciar agendamento | Studio B</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="booking.css?v=2" />
+    <script src="supabase-config.js?v=2" defer></script>
+    <script src="manage-booking.js?v=1" defer></script>
+  </head>
+  <body>
+    <header class="booking-header">
+      <a class="booking-brand" href="index.html"><span>BEATRIZ</span><small>STUDIO B</small></a>
+      <a class="header-link" href="booking.html">Novo agendamento</a>
+    </header>
+
+    <main class="booking-main manage-main">
+      <section class="manage-card">
+        <p class="eyebrow">Área segura</p>
+        <h1>Gerenciar agendamento</h1>
+        <div class="loading-state" data-loading hidden>Consultando seu agendamento…</div>
+
+        <div data-appointment hidden>
+          <div class="appointment-details" data-appointment-details></div>
+          <button class="button danger" type="button" data-cancel>Cancelar agendamento</button>
+          <p class="security-note">O cancelamento está sujeito ao prazo configurado pelo Studio B.</p>
+        </div>
+
+        <div data-recovery>
+          <p>Use o link pessoal recebido por e-mail. Se você perdeu o link, confirme os mesmos dados usados no agendamento para receber um código de acesso.</p>
+          <form data-recovery-form>
+            <label>E-mail<input name="email" type="email" autocomplete="email" required /></label>
+            <label>WhatsApp<input name="phone" type="tel" inputmode="tel" autocomplete="tel" required /></label>
+            <div class="field-row">
+              <label>Data<input name="date" type="date" required /></label>
+              <label>Horário<input name="time" type="time" required /></label>
+            </div>
+            <button class="button primary" type="submit">Enviar código por e-mail</button>
+          </form>
+
+          <form data-code-form hidden>
+            <p>Digite o código de seis números enviado ao seu e-mail.</p>
+            <label>Código<input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required /></label>
+            <button class="button primary" type="submit">Validar código</button>
+          </form>
+        </div>
+
+        <div class="notice success" data-cancelled hidden><h2>Agendamento cancelado.</h2><p>O horário foi liberado e enviamos a confirmação para seu e-mail.</p></div>
+        <p class="status" role="status" aria-live="polite" data-status></p>
+      </section>
+    </main>
+  </body>
+</html>

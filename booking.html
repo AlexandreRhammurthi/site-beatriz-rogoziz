@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#082f30" />
+    <meta name="robots" content="noindex" />
+    <title>Agendar atendimento | Studio B</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="booking.css?v=2" />
+    <script src="supabase-config.js?v=2" defer></script>
+    <script src="booking.js?v=1" defer></script>
+  </head>
+  <body>
+    <header class="booking-header">
+      <a class="booking-brand" href="index.html" aria-label="Voltar ao site do Studio B">
+        <span>BEATRIZ</span><small>STUDIO B</small>
+      </a>
+      <a class="header-link" href="manage-booking.html">Gerenciar agendamento</a>
+    </header>
+
+    <main class="booking-main">
+      <section class="booking-shell" aria-labelledby="booking-title">
+        <aside class="booking-intro">
+          <p class="eyebrow">Agendamento online</p>
+          <h1 id="booking-title">Escolha seu momento de cuidado.</h1>
+          <p>Os horários apresentados respeitam a duração do serviço e a disponibilidade real do Studio B.</p>
+          <ol class="steps" aria-label="Etapas do agendamento">
+            <li class="active" data-step-marker="1"><span>1</span> Seus dados</li>
+            <li data-step-marker="2"><span>2</span> Data e horário</li>
+            <li data-step-marker="3"><span>3</span> Agenda Google</li>
+          </ol>
+        </aside>
+
+        <div class="booking-panel">
+          <div class="loading-state" data-loading>Consultando a agenda…</div>
+          <div class="notice error" data-config-error hidden>
+            <h2>Agendamento em configuração</h2>
+            <p>O agendamento online ainda não está disponível. Por enquanto, fale com o Studio B pelo WhatsApp.</p>
+            <a class="button primary" href="index.html#agendamento">Voltar ao site</a>
+          </div>
+
+          <form data-booking-form hidden>
+            <fieldset data-step="1">
+              <legend>Seus dados e o cuidado desejado</legend>
+              <p class="field-help">Não é necessário criar uma conta.</p>
+              <label>Nome completo<input name="name" autocomplete="name" maxlength="100" required /></label>
+              <label>WhatsApp<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999" required /></label>
+              <label>E-mail<input name="email" type="email" autocomplete="email" required /></label>
+              <label>Serviço<select name="service_id" required><option value="">Selecione</option></select></label>
+              <div class="form-actions end"><button class="button primary" type="button" data-next="2">Continuar</button></div>
+            </fieldset>
+
+            <fieldset data-step="2" hidden>
+              <legend>Escolha uma data e um horário</legend>
+              <label>Data<input name="date" type="date" required /></label>
+              <div class="slots" data-slots aria-live="polite">
+                <p class="empty-state">Escolha uma data para consultar os horários.</p>
+              </div>
+              <input name="starts_at" type="hidden" required />
+              <div class="form-actions"><button class="button secondary" type="button" data-back="1">Voltar</button><button class="button primary" type="button" data-next="3">Confirmar horário</button></div>
+            </fieldset>
+
+            <fieldset data-step="3" hidden>
+              <legend>Adicionar à sua Agenda Google?</legend>
+              <p class="field-help">Se você escolher “Sim”, enviaremos um convite para o e-mail informado. Você poderá aceitar ou recusar pelo Google Agenda.</p>
+              <div class="choice-grid">
+                <label class="choice"><input type="radio" name="sync_calendar" value="yes" required /><span><strong>Sim</strong>Quero receber o convite</span></label>
+                <label class="choice"><input type="radio" name="sync_calendar" value="no" required /><span><strong>Não</strong>Somente confirmação por e-mail</span></label>
+              </div>
+              <div class="booking-summary" data-summary></div>
+              <label class="consent"><input type="checkbox" name="privacy" required /> <span>Confirmo que os dados informados serão usados para administrar este agendamento.</span></label>
+              <div class="form-actions"><button class="button secondary" type="button" data-back="2">Voltar</button><button class="button primary" type="submit">Concluir agendamento</button></div>
+            </fieldset>
+          </form>
+
+          <div class="notice success" data-success hidden>
+            <p class="eyebrow">Tudo certo</p>
+            <h2>Seu cuidado está agendado.</h2>
+            <p data-success-copy></p>
+            <a class="button primary" data-manage-link href="manage-booking.html">Gerenciar agendamento</a>
+            <p class="security-note">Guarde o link enviado por e-mail. Ele é pessoal e permite cancelar o atendimento com segurança.</p>
+          </div>
+          <p class="status" role="status" aria-live="polite" data-status></p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

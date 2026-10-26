@@ -10,10 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=3" />
+    <link rel="stylesheet" href="admin.css?v=4" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="supabase-config.js?v=1" defer></script>
-    <script src="admin.js?v=3" defer></script>
+    <script src="supabase-config.js?v=2" defer></script>
+    <script src="admin.js?v=4" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -59,6 +59,34 @@
       </section>
 
       <section class="dashboard" data-dashboard hidden>
+        <section class="booking-settings-card" aria-labelledby="booking-settings-title">
+          <div class="settings-heading">
+            <div>
+              <p class="eyebrow">Agenda</p>
+              <h2 id="booking-settings-title">Disponibilidade online</h2>
+              <p>Defina quando os clientes podem agendar. Eventos ocupados no Google Agenda também bloqueiam automaticamente esses horários.</p>
+            </div>
+            <span class="connection-badge" data-booking-state>Verificando integração…</span>
+          </div>
+          <form data-booking-settings-form>
+            <div class="fields-grid settings-grid">
+              <label>Agenda<input value="Studio B - Beatriz Rogoziz" disabled /></label>
+              <label>Fuso horário<input value="America/Sao_Paulo" disabled /></label>
+              <label>Antecedência mínima (horas)<input name="minimum_notice_hours" type="number" min="0" max="720" required /></label>
+              <label>Agenda aberta por quantos dias<input name="booking_horizon_days" type="number" min="1" max="365" required /></label>
+              <label>Intervalo entre opções (minutos)<input name="slot_interval_minutes" type="number" min="5" max="120" step="5" required /></label>
+              <label>Limite para cancelamento (horas)<input name="cancellation_notice_hours" type="number" min="0" max="720" required /></label>
+              <label class="check full"><input name="booking_enabled" type="checkbox" /> Ativar agendamento online quando a integração estiver conectada</label>
+            </div>
+            <div class="prices-heading">
+              <h3>Horários de atendimento</h3>
+              <button class="text-action" type="button" data-add-rule>Adicionar período</button>
+            </div>
+            <div class="availability-list" data-rules-list></div>
+            <div class="settings-actions"><button class="button primary" type="submit">Salvar disponibilidade</button></div>
+          </form>
+        </section>
+
         <div class="dashboard-heading">
           <div>
             <p class="eyebrow">Conteúdo do site</p>
@@ -82,6 +110,20 @@
         <label class="check"><input type="checkbox" data-price-field="is_promotional" /> Promocional</label>
         <label class="check"><input type="checkbox" data-price-field="is_active" checked /> Visível</label>
         <button class="remove-price" type="button" data-remove-price aria-label="Remover esta opção">Remover</button>
+      </div>
+    </template>
+
+    <template id="availability-row-template">
+      <div class="availability-row" data-rule-row>
+        <label>Dia da semana
+          <select data-rule-field="weekday" required>
+            <option value="0">Domingo</option><option value="1">Segunda-feira</option><option value="2">Terça-feira</option><option value="3">Quarta-feira</option><option value="4">Quinta-feira</option><option value="5">Sexta-feira</option><option value="6">Sábado</option>
+          </select>
+        </label>
+        <label>Início<input data-rule-field="start_time" type="time" required /></label>
+        <label>Fim<input data-rule-field="end_time" type="time" required /></label>
+        <label class="check"><input data-rule-field="is_active" type="checkbox" checked /> Ativo</label>
+        <button class="remove-price" type="button" data-remove-rule>Remover</button>
       </div>
     </template>
   </body>

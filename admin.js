@@ -6,6 +6,8 @@ const logoutButton = document.querySelector("[data-logout]");
 const servicesList = document.querySelector("[data-services-list]");
 const statusElement = document.querySelector("[data-status]");
 const priceTemplate = document.querySelector("#price-row-template");
+const ruleTemplate = document.querySelector("#availability-row-template");
+const rulesList = document.querySelector("[data-rules-list]");
 
 const escapeHTML = (value = "") => String(value)
   .replaceAll("&", "&amp;")
@@ -65,6 +67,16 @@ const addPriceRow = (container, price = {}) => {
   container.append(row);
 };
 
+const addRuleRow = (rule = {}) => {
+  const row = ruleTemplate.content.firstElementChild.cloneNode(true);
+  row.querySelectorAll("[data-rule-field]").forEach((field) => {
+    const name = field.dataset.ruleField;
+    if (field.type === "checkbox") field.checked = rule[name] ?? true;
+    else field.value = rule[name] ?? (name === "weekday" ? "1" : "");
+  });
+  rulesList.append(row);
+};
+
 const serviceMarkup = (service) => `
   <details class="service-editor" data-service-id="${escapeHTML(service.id)}">
     <summary>
@@ -79,6 +91,7 @@ const serviceMarkup = (service) => `
         <label>Nome<input name="name" value="${escapeHTML(service.name)}" required /></label>
         <label>Subtítulo<input name="subtitle" value="${escapeHTML(service.subtitle || "")}" /></label>
         <label>Duração<input name="duration_label" value="${escapeHTML(service.duration_label || "")}" placeholder="Duração: 1 hora" /></label>
+        <label>Duração em minutos<input name="duration_minutes" type="number" min="10" max="480" step="5" value="${Number(service.duration_minutes) || 60}" required /></label>
         <label>Ordem<input name="sort_order" type="number" step="1" value="${Number(service.sort_order) || 0}" /></label>
         <label class="full">Descrição<textarea name="description">${escapeHTML(service.description || "")}</textarea></label>
         <label class="full">Mensagem do WhatsApp<textarea name="whatsapp_message">${escapeHTML(service.whatsapp_message || "")}</textarea></label>
@@ -112,9 +125,39 @@ const loadServices = async () => {
   });
 };
 
+const loadBookingSettings = async () => {
+  const [{ data: settings, error: settingsError }, { data: rules, error: rulesError }] = await Promise.all([
+    client.from("booking_settings").select("*").eq("id", true).single(),
+    client.from("availability_rules").select("*").order("weekday").order("start_time")
+  ]);
+  if (settingsError || rulesError) throw settingsError || rulesError;
+  const form = document.querySelector("[data-booking-settings-form]");
+  ["minimum_notice_hours", "booking_horizon_days", "slot_interval_minutes", "cancellation_notice_hours"].forEach((name) => {
+    form.elements[name].value = settings[name];
+  });
+  form.elements.booking_enabled.checked = settings.booking_enabled;
+  rulesList.innerHTML = "";
+  (rules || []).forEach(addRuleRow);
+  if (!rules?.length) addRuleRow();
+
+  try {
+    const response = await fetch(window.STUDIO_B_SUPABASE.bookingApiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: window.STUDIO_B_SUPABASE.publishableKey },
+      body: JSON.stringify({ action: "config" })
+    });
+    const result = await response.json();
+    const badge = document.querySelector("[data-booking-state]");
+    badge.textContent = result.enabled ? "Agendamento ativo" : settings.booking_enabled ? "Integração pendente" : "Agendamento desativado";
+    badge.classList.toggle("connected", result.enabled);
+  } catch {
+    document.querySelector("[data-booking-state]").textContent = "Integração pendente";
+  }
+};
+
 const showDashboard = async () => {
   setView("dashboard");
-  await loadServices();
+  await Promise.all([loadServices(), loadBookingSettings()]);
 };
 
 const handleSession = async (session) => {
@@ -203,6 +246,44 @@ logoutButton?.addEventListener("click", async () => {
   setView("auth");
 });
 
+document.querySelector("[data-add-rule]")?.addEventListener("click", () => addRuleRow());
+
+rulesList?.addEventListener("click", (event) => {
+  const remove = event.target.closest("[data-remove-rule]");
+  if (!remove) return;
+  remove.closest("[data-rule-row]").remove();
+  if (!rulesList.children.length) addRuleRow();
+});
+
+document.querySelector("[data-booking-settings-form]")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  const values = new FormData(event.currentTarget);
+  const rules = Array.from(rulesList.querySelectorAll("[data-rule-row]")).map((row) => ({
+    weekday: Number(row.querySelector('[data-rule-field="weekday"]').value),
+    start_time: row.querySelector('[data-rule-field="start_time"]').value,
+    end_time: row.querySelector('[data-rule-field="end_time"]').value,
+    is_active: row.querySelector('[data-rule-field="is_active"]').checked
+  }));
+  if (rules.some((rule) => !rule.start_time || !rule.end_time || rule.start_time >= rule.end_time)) {
+    return showStatus("Revise os horários de início e fim.", true);
+  }
+  const settings = {
+    minimum_notice_hours: Number(values.get("minimum_notice_hours")),
+    booking_horizon_days: Number(values.get("booking_horizon_days")),
+    slot_interval_minutes: Number(values.get("slot_interval_minutes")),
+    cancellation_notice_hours: Number(values.get("cancellation_notice_hours")),
+    booking_enabled: values.get("booking_enabled") === "on"
+  };
+  setBusy(button, true);
+  const { error: settingsError } = await client.from("booking_settings").update(settings).eq("id", true);
+  const { error: rulesError } = settingsError ? { error: settingsError } : await client.rpc("replace_availability_rules", { p_rules: rules });
+  setBusy(button, false);
+  if (settingsError || rulesError) return showStatus((settingsError || rulesError).message, true);
+  showStatus("Disponibilidade salva.");
+  await loadBookingSettings();
+});
+
 servicesList?.addEventListener("click", async (event) => {
   const editor = event.target.closest("[data-service-id]");
   if (!editor) return;
@@ -260,6 +341,7 @@ servicesList?.addEventListener("submit", async (event) => {
     name: String(values.get("name")).trim(),
     subtitle: String(values.get("subtitle")).trim(),
     duration_label: String(values.get("duration_label")).trim(),
+    duration_minutes: Number(values.get("duration_minutes")),
     description: String(values.get("description")).trim(),
     whatsapp_message: String(values.get("whatsapp_message")).trim(),
     sort_order: Number(values.get("sort_order")) || 0,
@@ -287,6 +369,7 @@ document.querySelector("[data-add-service]")?.addEventListener("click", async (e
     subtitle: "",
     description: "",
     duration_label: "",
+    duration_minutes: 60,
     whatsapp_message: "",
     sort_order: servicesList.children.length + 1,
     is_active: false

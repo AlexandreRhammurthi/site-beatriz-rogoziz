@@ -40,6 +40,7 @@ const normalizeService = (service, index) => ({
 });
 
 let services = (Array.isArray(studio.services) ? studio.services : []).map(normalizeService);
+let onlineBookingEnabled = false;
 const servicesContainer = document.querySelector("[data-services]");
 const menuCardContainer = document.querySelector("[data-menu-card]");
 
@@ -188,6 +189,26 @@ loadServicesFromSupabase().catch((error) => {
   console.warn("Não foi possível conectar ao Supabase; usando os dados locais.", error);
 });
 
+const loadBookingConfig = async () => {
+  const settings = window.STUDIO_B_SUPABASE;
+  if (!settings?.bookingApiUrl || !settings?.publishableKey) return;
+  const response = await fetch(settings.bookingApiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: settings.publishableKey },
+    body: JSON.stringify({ action: "config" })
+  });
+  if (!response.ok) return;
+  const config = await response.json();
+  onlineBookingEnabled = config.enabled === true;
+  if (onlineBookingEnabled) {
+    document.querySelectorAll("[data-booking]").forEach((element) => {
+      element.setAttribute("aria-label", "Abrir agendamento online do Studio B");
+    });
+  }
+};
+
+loadBookingConfig().catch((error) => console.warn("Agendamento online indisponível; mantendo o WhatsApp.", error));
+
 const header = document.querySelector("[data-header]");
 const fab = document.querySelector("[data-fab]");
 const heroEl = document.querySelector("#inicio");
@@ -235,6 +256,15 @@ const feedback = document.querySelector("[data-booking-feedback]");
 document.addEventListener("click", (event) => {
   const trigger = event.target.closest("[data-booking]");
   if (!trigger) return;
+
+  if (onlineBookingEnabled) {
+    event.preventDefault();
+    const serviceIndex = trigger.getAttribute("data-service-index");
+    const service = serviceIndex !== null && services[serviceIndex] ? services[serviceIndex] : null;
+    const query = service?.id ? `?service=${encodeURIComponent(service.id)}` : "";
+    window.location.href = `booking.html${query}`;
+    return;
+  }
 
   const number = String(studio.whatsappNumber || "").replace(/\D/g, "");
   if (!number) {

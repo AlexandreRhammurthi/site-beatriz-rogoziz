@@ -74,11 +74,25 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .status { position: fixed; right: 1.2rem; bottom: 1.2rem; z-index: 20; max-width: min(420px, calc(100% - 2.4rem)); margin: 0; padding: .9rem 1.1rem; background: var(--petrol-deep); color: white; box-shadow: 0 10px 35px rgba(0,0,0,.2); opacity: 0; pointer-events: none; transform: translateY(8px); transition: .2s; }
 .status.visible { opacity: 1; transform: none; }
 .status.error { background: var(--danger); }
+.booking-settings-card { margin-bottom: 3.5rem; padding: clamp(1.25rem,3vw,2rem); border: 1px solid rgba(183,154,93,.4); background: var(--paper); box-shadow: 0 12px 36px rgba(12,48,47,.07); }
+.settings-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; }
+.settings-heading h2 { font-size: clamp(2.2rem,4vw,3.4rem); }
+.settings-heading p:last-child { max-width: 680px; color: var(--muted); line-height: 1.65; }
+.connection-badge { flex: 0 0 auto; padding: .45rem .7rem; border: 1px solid rgba(183,154,93,.45); color: var(--gold); font-size: .58rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
+.connection-badge.connected { border-color: var(--petrol); background: var(--petrol); color: white; }
+.settings-grid { padding-bottom: 1rem; }
+.availability-list { display: grid; gap: .7rem; }
+.availability-row { display: grid; grid-template-columns: 1.35fr 1fr 1fr auto auto; align-items: end; gap: .7rem; padding: .9rem; background: #f4efe4; border: 1px solid var(--line); }
+.availability-row label { margin: 0; }
+.availability-row select { width: 100%; border: 1px solid var(--line); background: white; color: var(--ink); padding: .8rem; }
+.settings-actions { display: flex; justify-content: flex-end; margin-top: 1.3rem; }
 
 @media (max-width: 900px) {
   .price-row { grid-template-columns: repeat(2, 1fr); }
   .price-row .wide { grid-column: 1 / -1; }
   .remove-price { justify-self: start; }
+  .availability-row { grid-template-columns: repeat(2,1fr); }
+  .settings-heading { flex-direction: column; }
 }
 
 @media (max-width: 620px) {
@@ -89,4 +103,5 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .fields-grid .full, .price-row .wide { grid-column: 1; }
   .service-editor summary, .service-editor-form { padding-left: 1rem; padding-right: 1rem; }
   .editor-actions { align-items: stretch; flex-direction: column-reverse; }
+  .availability-row { grid-template-columns: 1fr; }
 }
