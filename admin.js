@@ -8,6 +8,7 @@ const statusElement = document.querySelector("[data-status]");
 const priceTemplate = document.querySelector("#price-row-template");
 const ruleTemplate = document.querySelector("#availability-row-template");
 const rulesList = document.querySelector("[data-rules-list]");
+const weekdayLabels = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 
 const escapeHTML = (value = "") => String(value)
   .replaceAll("&", "&amp;")
@@ -267,6 +268,20 @@ document.querySelector("[data-booking-settings-form]")?.addEventListener("submit
   }));
   if (rules.some((rule) => !rule.start_time || !rule.end_time || rule.start_time >= rule.end_time)) {
     return showStatus("Revise os horários de início e fim.", true);
+  }
+  const activeRules = rules.filter((rule) => rule.is_active);
+  for (let index = 0; index < activeRules.length; index += 1) {
+    for (let comparison = index + 1; comparison < activeRules.length; comparison += 1) {
+      const first = activeRules[index];
+      const second = activeRules[comparison];
+      if (first.weekday !== second.weekday) continue;
+      if (first.start_time === second.start_time && first.end_time === second.end_time) {
+        return showStatus(`Há dois períodos iguais para ${weekdayLabels[first.weekday]}. Remova ou altere um deles.`, true);
+      }
+      if (first.start_time < second.end_time && second.start_time < first.end_time) {
+        return showStatus(`Os períodos de ${weekdayLabels[first.weekday]} estão sobrepostos. Ajuste os horários.`, true);
+      }
+    }
   }
   const settings = {
     minimum_notice_hours: Number(values.get("minimum_notice_hours")),
