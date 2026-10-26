@@ -162,7 +162,12 @@ h2 { font-size: clamp(2.8rem, 5.5vw, 5.5rem); }
 .footer-map-link:hover, .footer-map-link:focus-visible { border-color: var(--gold-light); color: var(--gold-light); }
 .footer-map { min-height: 280px; overflow: hidden; border: 1px solid rgba(216,194,143,.32); background: var(--petrol-deep); }
 .footer-map iframe { display: block; width: 100%; height: 100%; min-height: 280px; border: 0; }
-.footer-brand { justify-self: start; color: white; }
+.footer-brand-block { align-self: start; justify-self: start; display: flex; flex-direction: column; align-items: center; gap: .9rem; transform: translateY(-.55rem); }
+.footer-brand { color: white; }
+.footer-instagram { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(216,194,143,.52); border-radius: 50%; color: var(--gold-light); transition: border-color .25s, color .25s, transform .25s; }
+.footer-instagram svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.45; }
+.footer-instagram .footer-instagram-dot { fill: currentColor; stroke: none; }
+.footer-instagram:hover, .footer-instagram:focus-visible { border-color: white; color: white; transform: translateY(-2px); }
 .footer-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.2rem 1.8rem; font-size: .58rem; letter-spacing: .13em; text-transform: uppercase; }
 .footer > p { justify-self: end; margin: 0; font-size: .6rem; letter-spacing: .08em; text-transform: uppercase; }
 
