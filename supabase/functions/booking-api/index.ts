@@ -1,9 +1,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const ALLOWED_ORIGINS = new Set([
+  "https://beatrizrogoziz.com.br",
+  "https://www.beatrizrogoziz.com.br",
   "https://alexandrerhammurthi.github.io",
   "http://localhost:8080",
   "http://127.0.0.1:8080",
+  "http://localhost:8087",
+  "http://127.0.0.1:8087",
 ]);
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
@@ -234,6 +238,7 @@ const getAvailability = async (
   serviceId: string,
   dateValue: string,
   settings: BookingSettings,
+  excludeAppointmentId?: string,
 ) => {
   const { data: service, error: serviceError } = await admin
     .from("services")
@@ -270,18 +275,25 @@ const getAvailability = async (
   );
   if (dayEnd <= earliest || dayStart > latest) return { service, slots: [] };
 
+  let appointmentsQuery = admin.from("appointments").select(
+    "id, starts_at, ends_at",
+  ).in("status", [
+    "pending",
+    "confirmed",
+  ]).lt("starts_at", dayEnd.toISOString()).gt(
+    "ends_at",
+    dayStart.toISOString(),
+  );
+  if (excludeAppointmentId) {
+    appointmentsQuery = appointmentsQuery.neq("id", excludeAppointmentId);
+  }
+
   const [
     { data: appointments, error: appointmentsError },
     { data: blocked, error: blockedError },
     googleBusy,
   ] = await Promise.all([
-    admin.from("appointments").select("starts_at, ends_at").in("status", [
-      "pending",
-      "confirmed",
-    ]).lt("starts_at", dayEnd.toISOString()).gt(
-      "ends_at",
-      dayStart.toISOString(),
-    ),
+    appointmentsQuery,
     admin.from("blocked_periods").select("starts_at, ends_at").lt(
       "starts_at",
       dayEnd.toISOString(),
@@ -411,6 +423,38 @@ const deleteGoogleEvent = async (eventId: string, sendUpdates: boolean) => {
   }
 };
 
+const updateGoogleEvent = async (
+  eventId: string,
+  appointment: Record<string, unknown>,
+  serviceName: string,
+  timezone: string,
+  manageUrl: string,
+) => {
+  const sendInvite = Boolean(appointment.calendar_sync_requested);
+  const params = new URLSearchParams({
+    sendUpdates: sendInvite ? "all" : "none",
+  });
+  return googleRequest(
+    `/calendars/${encodeURIComponent(GOOGLE_CALENDAR_ID)}/events/${encodeURIComponent(eventId)}?${params}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        summary: `Studio B • ${serviceName}`,
+        location: STUDIO_ADDRESS,
+        description: [
+          "Atendimento no Studio B com Beatriz Rogoziz.",
+          `Cliente: ${appointment.customer_name}`,
+          `WhatsApp: ${appointment.customer_phone}`,
+          `Gerenciar ou cancelar: ${manageUrl}`,
+        ].join("\n"),
+        start: { dateTime: appointment.starts_at, timeZone: timezone },
+        end: { dateTime: appointment.ends_at, timeZone: timezone },
+        attendees: sendInvite ? [{ email: appointment.customer_email }] : [],
+      }),
+    },
+  );
+};
+
 const bytesToBase64 = (bytes: Uint8Array) => {
   let binary = "";
   for (let offset = 0; offset < bytes.length; offset += 0x8000) {
@@ -464,6 +508,7 @@ const formatAppointment = (
   const start = new Date(String(appointment.starts_at));
   return {
     id: appointment.id,
+    service_id: appointment.service_id,
     customer_name: appointment.customer_name,
     service_name:
       appointment.services && typeof appointment.services === "object"
@@ -522,6 +567,30 @@ const recoveryEmail = (name: string, code: string) => `
   html(code)
 }</p>
     <p>O código expira em 10 minutos. Se você não fez esta solicitação, ignore este e-mail.</p>
+  </div>`;
+
+const rescheduleEmail = (
+  name: string,
+  service: string,
+  start: Date,
+  timezone: string,
+  manageUrl: string,
+) => `
+  <div style="font-family:Arial,sans-serif;color:#143434;line-height:1.6;max-width:620px;margin:auto">
+    <h1 style="font-family:Georgia,serif;font-weight:normal;color:#0b3b3c">Agendamento atualizado</h1>
+    <p>Olá, ${html(name)}. A nova data do seu cuidado no Studio B foi confirmada.</p>
+    <p><strong>${html(service)}</strong><br>${
+  html(
+    new Intl.DateTimeFormat("pt-BR", {
+      timeZone: timezone,
+      dateStyle: "full",
+      timeStyle: "short",
+    }).format(start),
+  )
+}<br>${html(STUDIO_ADDRESS)}</p>
+    <p><a href="${
+  html(manageUrl)
+}" style="display:inline-block;background:#0b3b3c;color:white;padding:12px 18px;text-decoration:none">Gerenciar agendamento</a></p>
   </div>`;
 
 Deno.serve(async (request) => {
@@ -727,6 +796,140 @@ Deno.serve(async (request) => {
       }
       return json(origin, {
         appointment: formatAppointment(appointment, settings.timezone),
+      });
+    }
+
+    if (action === "reschedule") {
+      const token = String(payload.token || "");
+      const startsAt = new Date(String(payload.starts_at || ""));
+      if (token.length < 32 || Number.isNaN(startsAt.getTime())) {
+        return json(origin, { error: "Nova data ou link inválido." }, 400);
+      }
+      const tokenHash = await secretHash(token);
+      const { data: appointment, error } = await admin
+        .from("appointments")
+        .select("*, services(name)")
+        .eq("manage_token_hash", tokenHash)
+        .single();
+      if (error || !appointment) {
+        return json(origin, {
+          error: "Agendamento não encontrado ou link inválido.",
+        }, 404);
+      }
+      if (appointment.status === "cancelled") {
+        return json(origin, {
+          error: "Um agendamento cancelado não pode ser reagendado.",
+        }, 409);
+      }
+      const deadline = new Date(appointment.starts_at).getTime() -
+        settings.cancellation_notice_hours * 3600000;
+      if (Date.now() > deadline) {
+        return json(origin, {
+          error:
+            `O reagendamento online encerra ${settings.cancellation_notice_hours} horas antes do atendimento. Fale com o Studio B pelo WhatsApp.`,
+        }, 409);
+      }
+
+      const local = partsInZone(startsAt, settings.timezone);
+      const localDate = `${local.year}-${local.month}-${local.day}`;
+      const availability = await getAvailability(
+        appointment.service_id,
+        localDate,
+        settings,
+        appointment.id,
+      );
+      if ("error" in availability) {
+        return json(origin, { error: availability.error }, availability.status);
+      }
+      const selected = availability.slots.find((slot) =>
+        slot.start === startsAt.toISOString()
+      );
+      if (!selected) {
+        return json(origin, {
+          error:
+            "Este horário não está mais disponível. Escolha outro horário.",
+        }, 409);
+      }
+
+      const previous = {
+        starts_at: appointment.starts_at,
+        ends_at: appointment.ends_at,
+        rescheduled_at: appointment.rescheduled_at,
+      };
+      const changedAt = new Date().toISOString();
+      const { data: updated, error: updateError } = await admin.from(
+        "appointments",
+      ).update({
+        starts_at: selected.start,
+        ends_at: selected.end,
+        rescheduled_at: changedAt,
+      }).eq("id", appointment.id).select("*, services(name)").single();
+      if (updateError) {
+        if (updateError.code === "23P01") {
+          return json(origin, {
+            error:
+              "Este horário acabou de ser reservado. Escolha outra opção.",
+          }, 409);
+        }
+        throw updateError;
+      }
+
+      const manageUrl = `${SITE_URL}/manage-booking.html#token=${token}`;
+      try {
+        if (appointment.google_event_id) {
+          await updateGoogleEvent(
+            appointment.google_event_id,
+            updated,
+            availability.service.name,
+            settings.timezone,
+            manageUrl,
+          );
+        } else {
+          const event = await createGoogleEvent(
+            updated,
+            availability.service.name,
+            settings.timezone,
+            manageUrl,
+          );
+          const { error: eventUpdateError } = await admin.from("appointments")
+            .update({ google_event_id: event.id }).eq("id", appointment.id);
+          if (eventUpdateError) throw eventUpdateError;
+          updated.google_event_id = event.id;
+        }
+      } catch (calendarError) {
+        console.error("Reschedule calendar update failed", calendarError);
+        const { error: rollbackError } = await admin.from("appointments")
+          .update(previous).eq("id", appointment.id);
+        if (rollbackError) {
+          console.error("Reschedule rollback failed", rollbackError);
+        }
+        return json(origin, {
+          error:
+            "Não foi possível atualizar a agenda agora. O horário original foi mantido.",
+        }, 502);
+      }
+
+      let emailDelivered = true;
+      try {
+        await sendEmail(
+          appointment.customer_email,
+          "Agendamento atualizado — Studio B",
+          rescheduleEmail(
+            appointment.customer_name,
+            availability.service.name,
+            new Date(selected.start),
+            settings.timezone,
+            manageUrl,
+          ),
+        );
+      } catch (emailError) {
+        emailDelivered = false;
+        console.error("Reschedule email failed", emailError);
+      }
+      return json(origin, {
+        success: true,
+        email_delivered: emailDelivered,
+        appointment: formatAppointment(updated, settings.timezone),
       });
     }
 

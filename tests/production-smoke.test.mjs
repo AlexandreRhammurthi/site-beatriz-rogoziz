@@ -11,29 +11,45 @@ const supabaseUrl = configSource.match(/url:\s*"([^"]+)"/)?.[1];
 
 test("site publicado expõe o contrato atualizado", { skip: !run }, async () => {
   const stamp = Date.now();
-  const [booking, admin] = await Promise.all([
+  const [booking, admin, manage] = await Promise.all([
     fetch(`${baseUrl}/booking.html?v=${stamp}`),
-    fetch(`${baseUrl}/admin.html?v=${stamp}`)
+    fetch(`${baseUrl}/admin.html?v=${stamp}`),
+    fetch(`${baseUrl}/manage-booking.html?v=${stamp}`)
   ]);
   assert.equal(booking.status, 200);
   assert.equal(admin.status, 200);
+  assert.equal(manage.status, 200);
   assert.match(await booking.text(), /href="privacy\.html"/);
   const adminHtml = await admin.text();
   assert.match(adminHtml, /data-blocked-period-form/);
   assert.match(adminHtml, /data-appointments-filter/);
   assert.match(adminHtml, /data-appointments-list/);
+  assert.match(await manage.text(), /data-reschedule-form/);
 });
 
 test("API pública de agendamento permanece operacional", { skip: !run }, async () => {
   const response = await fetch(apiUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json", apikey: key },
+    headers: { "Content-Type": "application/json", apikey: key, Origin: baseUrl },
     body: JSON.stringify({ action: "config" })
   });
   assert.equal(response.status, 200);
   const config = await response.json();
   assert.equal(config.enabled, true);
   assert.ok(Array.isArray(config.services) && config.services.length > 0);
+});
+
+test("reagendamento rejeita link inválido sem alterar dados", { skip: !run }, async () => {
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: key, Origin: baseUrl },
+    body: JSON.stringify({
+      action: "reschedule",
+      token: "x".repeat(43),
+      starts_at: "2026-12-01T15:00:00.000Z"
+    })
+  });
+  assert.equal(response.status, 404);
 });
 
 test("bloqueios não podem ser consultados anonimamente", { skip: !run }, async () => {

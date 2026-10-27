@@ -50,7 +50,7 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 
 ## Fase 2 — Reagendamento seguro
 
-**Estado:** planejado
+**Estado:** concluído em produção
 
 - Permitir nova escolha de data e horário usando o link privado existente.
 - Revalidar disponibilidade e impedir concorrência de horários.
@@ -111,3 +111,4 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | 27/10/2026 | Link de privacidade no agendamento | 3 testes automatizados + QA móvel | publicado |
 | 27/10/2026 | Bloqueios de datas e horários | 6 testes automatizados + segurança RLS | publicado |
 | 27/10/2026 | Painel administrativo de agendamentos | 6 testes automatizados + QA responsivo | publicado |
+| 27/10/2026 | Reagendamento seguro pelo link privado | 6 testes automatizados + integração | publicado |
