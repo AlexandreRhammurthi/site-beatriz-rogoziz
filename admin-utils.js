@@ -100,12 +100,15 @@
     return `${date}, ${time.format(new Date(startsAt))}–${time.format(new Date(endsAt))}`;
   };
 
+  const csvCell = (value = "") => `"${String(value).replaceAll('"', '""')}"`;
+
   globalThis.STUDIO_B_ADMIN_UTILS = Object.freeze({
     TIMEZONE,
     addDays,
     appointmentMatches,
     appointmentStatusLabel,
     buildBlockedPeriod,
+    csvCell,
     formatAppointmentDate,
     formatBlockedPeriod,
     formatPhone,

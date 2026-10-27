@@ -95,6 +95,8 @@ type BookingSettings = {
   minimum_notice_hours: number;
   cancellation_notice_hours: number;
   slot_interval_minutes: number;
+  buffer_minutes: number;
+  daily_booking_limit: number;
   booking_enabled: boolean;
   calendar_label: string;
 };
@@ -232,7 +234,14 @@ const overlaps = (
   start: Date,
   end: Date,
   periods: Array<{ start: Date; end: Date }>,
-) => periods.some((period) => start < period.end && end > period.start);
+  bufferMinutes = 0,
+) => {
+  const buffer = bufferMinutes * 60000;
+  return periods.some((period) =>
+    start.getTime() < period.end.getTime() + buffer &&
+    end.getTime() + buffer > period.start.getTime()
+  );
+};
 
 const getAvailability = async (
   serviceId: string,
@@ -302,6 +311,10 @@ const getAvailability = async (
   ]);
   if (appointmentsError) throw appointmentsError;
   if (blockedError) throw blockedError;
+  if (
+    settings.daily_booking_limit > 0 &&
+    (appointments || []).length >= settings.daily_booking_limit
+  ) return { service, slots: [] };
 
   const unavailable = [
     ...googleBusy,
@@ -342,7 +355,7 @@ const getAvailability = async (
       const end = new Date(cursor + service.duration_minutes * 60000);
       if (
         end > windowEnd || start < earliest || start > latest ||
-        overlaps(start, end, unavailable) ||
+        overlaps(start, end, unavailable, settings.buffer_minutes) ||
         (pauseStart && pauseEnd && start < pauseEnd && end > pauseStart)
       ) continue;
       slots.push({

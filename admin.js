@@ -140,7 +140,7 @@ const loadBookingSettings = async () => {
   ]);
   if (settingsError || rulesError) throw settingsError || rulesError;
   const form = document.querySelector("[data-booking-settings-form]");
-  ["minimum_notice_hours", "booking_horizon_days", "slot_interval_minutes", "cancellation_notice_hours", "reminder_hours_before"].forEach((name) => {
+  ["minimum_notice_hours", "booking_horizon_days", "slot_interval_minutes", "buffer_minutes", "daily_booking_limit", "cancellation_notice_hours", "reminder_hours_before"].forEach((name) => {
     form.elements[name].value = settings[name];
   });
   form.elements.booking_enabled.checked = settings.booking_enabled;
@@ -412,6 +412,8 @@ document.querySelector("[data-booking-settings-form]")?.addEventListener("submit
     minimum_notice_hours: Number(values.get("minimum_notice_hours")),
     booking_horizon_days: Number(values.get("booking_horizon_days")),
     slot_interval_minutes: Number(values.get("slot_interval_minutes")),
+    buffer_minutes: Number(values.get("buffer_minutes")),
+    daily_booking_limit: Number(values.get("daily_booking_limit")),
     cancellation_notice_hours: Number(values.get("cancellation_notice_hours")),
     reminder_hours_before: Number(values.get("reminder_hours_before")),
     reminders_enabled: values.get("reminders_enabled") === "on",
@@ -494,6 +496,28 @@ appointmentsFilter?.addEventListener("submit", async (event) => {
 });
 
 appointmentsFilter?.elements.search.addEventListener("input", renderAppointments);
+
+document.querySelector("[data-export-appointments]")?.addEventListener("click", () => {
+  if (!appointmentsCache.length) return showStatus("Não há agendamentos carregados para exportar.", true);
+  const header = ["Data e horário", "Serviço", "Cliente", "E-mail", "WhatsApp", "Status", "Convite de agenda"];
+  const rows = appointmentsCache.map((appointment) => [
+    adminUtils.formatAppointmentDate(appointment.starts_at, appointment.ends_at),
+    appointment.services?.name || "Serviço removido",
+    appointment.customer_name,
+    appointment.customer_email,
+    adminUtils.formatPhone(appointment.customer_phone),
+    adminUtils.appointmentStatusLabel(appointment.status),
+    appointment.calendar_sync_requested ? "Sim" : "Não"
+  ]);
+  const csv = [header, ...rows].map((row) => row.map(adminUtils.csvCell).join(";")).join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `agendamentos-studio-b-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+  showStatus("Arquivo CSV gerado com os filtros de período e status atuais.");
+});
 
 servicesList?.addEventListener("click", async (event) => {
   const editor = event.target.closest("[data-service-id]");

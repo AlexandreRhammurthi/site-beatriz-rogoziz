@@ -72,13 +72,15 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 
 ## Fase 4 — Melhorias operacionais
 
-**Estado:** planejado
+**Estado:** parcialmente concluído em produção
 
 - Intervalo de preparação entre sessões.
 - Limite diário de atendimentos.
 - Observações administrativas privadas.
 - Estados de atendimento: confirmado, concluído, ausência e cancelado.
 - Exportação controlada de agendamentos.
+
+**Entregue:** intervalo de preparação, limite diário e exportação CSV. Observações privadas e estados de comparecimento permanecem na próxima entrega operacional.
 
 **Testes:** regras de capacidade, transições de estado, privacidade e exportação.
 
@@ -113,3 +115,4 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | 27/10/2026 | Painel administrativo de agendamentos | 6 testes automatizados + QA responsivo | publicado |
 | 27/10/2026 | Reagendamento seguro pelo link privado | 6 testes automatizados + integração | publicado |
 | 27/10/2026 | Lembretes automáticos | 6 testes automatizados; envio mantido desligado | backend publicado, ativação pendente |
+| 27/10/2026 | Capacidade operacional e exportação | 6 testes automatizados | publicado |

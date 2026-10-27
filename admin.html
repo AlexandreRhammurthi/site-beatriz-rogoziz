@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=7" />
+    <link rel="stylesheet" href="admin.css?v=8" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
-    <script src="admin-utils.js?v=2" defer></script>
-    <script src="admin.js?v=9" defer></script>
+    <script src="admin-utils.js?v=3" defer></script>
+    <script src="admin.js?v=10" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -76,6 +76,8 @@
               <label>Antecedência mínima (horas)<input name="minimum_notice_hours" type="number" min="0" max="720" required /></label>
               <label>Agenda aberta por quantos dias<input name="booking_horizon_days" type="number" min="1" max="365" required /></label>
               <label>Intervalo entre opções (minutos)<input name="slot_interval_minutes" type="number" min="5" max="120" step="5" required /></label>
+              <label>Preparação entre sessões (minutos)<input name="buffer_minutes" type="number" min="0" max="180" step="5" required /></label>
+              <label>Limite de atendimentos por dia <span class="optional">(0 = sem limite)</span><input name="daily_booking_limit" type="number" min="0" max="50" required /></label>
               <label>Limite para cancelamento (horas)<input name="cancellation_notice_hours" type="number" min="0" max="720" required /></label>
               <label>Lembrete com antecedência (horas)<input name="reminder_hours_before" type="number" min="1" max="168" required /></label>
               <label class="check full"><input name="reminders_enabled" type="checkbox" /> Ativar lembretes automáticos por e-mail após a aprovação do Google</label>
@@ -119,6 +121,7 @@
               <h2 id="appointments-title">Agendamentos</h2>
               <p>Consulte os próximos atendimentos e o histórico recente. Os dados abaixo permanecem restritos à área administrativa.</p>
             </div>
+            <button class="button secondary" type="button" data-export-appointments>Exportar CSV</button>
           </div>
           <form class="appointments-filter" data-appointments-filter>
             <div class="fields-grid appointments-filter-fields">

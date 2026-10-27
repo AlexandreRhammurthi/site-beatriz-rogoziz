@@ -81,6 +81,7 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .connection-badge { flex: 0 0 auto; padding: .45rem .7rem; border: 1px solid rgba(183,154,93,.45); color: var(--gold); font-size: .58rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
 .connection-badge.connected { border-color: var(--petrol); background: var(--petrol); color: white; }
 .settings-grid { padding-bottom: 1rem; }
+.settings-grid .optional { color: var(--muted); font-size: .55rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
 .availability-list { display: grid; gap: .7rem; }
 .availability-row { display: grid; grid-template-columns: 1.3fr repeat(4,minmax(105px,1fr)) auto auto; align-items: end; gap: .7rem; padding: .9rem; background: #f4efe4; border: 1px solid var(--line); }
 .availability-row label { margin: 0; }
