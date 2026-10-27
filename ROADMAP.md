@@ -28,7 +28,7 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 
 ### 1.2 Bloqueios e horários excepcionais
 
-**Estado:** planejado
+**Estado:** concluído em produção
 
 - Criar bloqueios integrais ou parciais com início, fim e motivo.
 - Listar bloqueios futuros no painel administrativo.
@@ -109,3 +109,4 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | --- | --- | --- | --- |
 | 27/10/2026 | Roadmap inicial | revisão estrutural | publicado |
 | 27/10/2026 | Link de privacidade no agendamento | 3 testes automatizados + QA móvel | publicado |
+| 27/10/2026 | Bloqueios de datas e horários | 6 testes automatizados + segurança RLS | publicado |

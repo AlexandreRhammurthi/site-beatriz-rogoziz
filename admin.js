@@ -8,6 +8,9 @@ const statusElement = document.querySelector("[data-status]");
 const priceTemplate = document.querySelector("#price-row-template");
 const ruleTemplate = document.querySelector("#availability-row-template");
 const rulesList = document.querySelector("[data-rules-list]");
+const blockedPeriodsList = document.querySelector("[data-blocked-periods-list]");
+const blockedPeriodForm = document.querySelector("[data-blocked-period-form]");
+const adminUtils = window.STUDIO_B_ADMIN_UTILS;
 const weekdayLabels = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 
 const escapeHTML = (value = "") => String(value)
@@ -156,9 +159,42 @@ const loadBookingSettings = async () => {
   }
 };
 
+const setBlockedPeriodDefaults = () => {
+  if (!blockedPeriodForm || !adminUtils) return;
+  const today = adminUtils.partsInZone(new Date(), adminUtils.TIMEZONE);
+  const dateValue = `${today.year}-${today.month}-${today.day}`;
+  blockedPeriodForm.elements.start_date.value ||= dateValue;
+  blockedPeriodForm.elements.end_date.value ||= dateValue;
+};
+
+const blockedPeriodMarkup = (period) => `
+  <article class="blocked-period" data-block-id="${escapeHTML(period.id)}">
+    <div>
+      <strong>${escapeHTML(period.reason || "Período indisponível")}</strong>
+      <p>${escapeHTML(adminUtils.formatBlockedPeriod(period.starts_at, period.ends_at))}</p>
+    </div>
+    <button type="button" data-remove-block>Remover bloqueio</button>
+  </article>
+`;
+
+const loadBlockedPeriods = async () => {
+  if (!blockedPeriodsList || !adminUtils) return;
+  const { data, error } = await client
+    .from("blocked_periods")
+    .select("id, starts_at, ends_at, reason")
+    .gt("ends_at", new Date().toISOString())
+    .order("starts_at")
+    .limit(100);
+  if (error) throw error;
+  blockedPeriodsList.innerHTML = data?.length
+    ? data.map(blockedPeriodMarkup).join("")
+    : '<p class="blocked-period-empty">Nenhum bloqueio futuro cadastrado.</p>';
+  setBlockedPeriodDefaults();
+};
+
 const showDashboard = async () => {
   setView("dashboard");
-  await Promise.all([loadServices(), loadBookingSettings()]);
+  await Promise.all([loadServices(), loadBookingSettings(), loadBlockedPeriods()]);
 };
 
 const handleSession = async (session) => {
@@ -308,6 +344,60 @@ document.querySelector("[data-booking-settings-form]")?.addEventListener("submit
   if (settingsError || rulesError) return showStatus((settingsError || rulesError).message, true);
   showStatus("Disponibilidade salva.");
   await loadBookingSettings();
+});
+
+blockedPeriodForm?.elements.all_day.addEventListener("change", (event) => {
+  const allDay = event.currentTarget.checked;
+  blockedPeriodForm.querySelectorAll("[data-block-time] input").forEach((input) => {
+    input.disabled = allDay;
+    input.required = !allDay;
+  });
+});
+
+blockedPeriodForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  const values = new FormData(blockedPeriodForm);
+  const period = adminUtils.buildBlockedPeriod({
+    startDate: String(values.get("start_date") || ""),
+    startTime: String(values.get("start_time") || ""),
+    endDate: String(values.get("end_date") || ""),
+    endTime: String(values.get("end_time") || ""),
+    allDay: blockedPeriodForm.elements.all_day.checked
+  });
+  if (period.error) return showStatus(period.error, true);
+  setBusy(button, true);
+  const { error } = await client.from("blocked_periods").insert({
+    ...period,
+    reason: String(values.get("reason") || "").trim()
+  });
+  setBusy(button, false);
+  if (error) return showStatus(error.message, true);
+  const keepDate = blockedPeriodForm.elements.end_date.value;
+  blockedPeriodForm.reset();
+  blockedPeriodForm.elements.start_date.value = keepDate;
+  blockedPeriodForm.elements.end_date.value = keepDate;
+  blockedPeriodForm.elements.start_time.value = "08:00";
+  blockedPeriodForm.elements.end_time.value = "18:00";
+  blockedPeriodForm.querySelectorAll("[data-block-time] input").forEach((input) => {
+    input.disabled = false;
+    input.required = true;
+  });
+  showStatus("Bloqueio adicionado. Os horários sobrepostos já estão indisponíveis.");
+  await loadBlockedPeriods();
+});
+
+blockedPeriodsList?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-remove-block]");
+  if (!button) return;
+  const item = button.closest("[data-block-id]");
+  if (!window.confirm("Remover este bloqueio e liberar novamente os horários?")) return;
+  setBusy(button, true);
+  const { error } = await client.from("blocked_periods").delete().eq("id", item.dataset.blockId);
+  setBusy(button, false);
+  if (error) return showStatus(error.message, true);
+  showStatus("Bloqueio removido.");
+  await loadBlockedPeriods();
 });
 
 servicesList?.addEventListener("click", async (event) => {

@@ -10,10 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=5" />
+    <link rel="stylesheet" href="admin.css?v=6" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
-    <script src="admin.js?v=6" defer></script>
+    <script src="admin-utils.js?v=1" defer></script>
+    <script src="admin.js?v=7" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -85,6 +86,28 @@
             <div class="availability-list" data-rules-list></div>
             <div class="settings-actions"><button class="button primary" type="submit">Salvar disponibilidade</button></div>
           </form>
+        </section>
+
+        <section class="booking-settings-card" aria-labelledby="blocked-periods-title">
+          <div class="settings-heading">
+            <div>
+              <p class="eyebrow">Exceções da agenda</p>
+              <h2 id="blocked-periods-title">Bloqueios de datas e horários</h2>
+              <p>Indisponibilize férias, feriados, compromissos ou apenas parte de um dia. Horários sobrepostos deixam de aparecer para os clientes.</p>
+            </div>
+          </div>
+          <form class="blocked-period-form" data-blocked-period-form>
+            <div class="fields-grid blocked-period-fields">
+              <label>Data inicial<input name="start_date" type="date" required /></label>
+              <label data-block-time>Hora inicial<input name="start_time" type="time" value="08:00" required /></label>
+              <label>Data final<input name="end_date" type="date" required /></label>
+              <label data-block-time>Hora final<input name="end_time" type="time" value="18:00" required /></label>
+              <label class="full">Motivo <span class="optional">(visível apenas no painel)</span><input name="reason" maxlength="180" placeholder="Ex.: Feriado, férias ou compromisso" /></label>
+              <label class="check full"><input name="all_day" type="checkbox" /> Bloquear o dia inteiro — a data final também será incluída</label>
+            </div>
+            <div class="settings-actions"><button class="button primary" type="submit">Adicionar bloqueio</button></div>
+          </form>
+          <div class="blocked-periods" data-blocked-periods-list aria-live="polite"></div>
         </section>
 
         <div class="dashboard-heading">
