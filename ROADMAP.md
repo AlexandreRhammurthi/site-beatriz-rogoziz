@@ -61,7 +61,7 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 
 ## Fase 3 — Lembretes automáticos
 
-**Estado:** planejado
+**Estado:** preparado em produção; ativação aguardando aprovação do Google
 
 - Configurar antecedência no painel.
 - Enviar lembrete por e-mail com serviço, horário, endereço e link privado.
@@ -112,3 +112,4 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | 27/10/2026 | Bloqueios de datas e horários | 6 testes automatizados + segurança RLS | publicado |
 | 27/10/2026 | Painel administrativo de agendamentos | 6 testes automatizados + QA responsivo | publicado |
 | 27/10/2026 | Reagendamento seguro pelo link privado | 6 testes automatizados + integração | publicado |
+| 27/10/2026 | Lembretes automáticos | 6 testes automatizados; envio mantido desligado | backend publicado, ativação pendente |

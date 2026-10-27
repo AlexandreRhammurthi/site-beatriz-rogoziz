@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
     <script src="admin-utils.js?v=2" defer></script>
-    <script src="admin.js?v=8" defer></script>
+    <script src="admin.js?v=9" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -77,6 +77,8 @@
               <label>Agenda aberta por quantos dias<input name="booking_horizon_days" type="number" min="1" max="365" required /></label>
               <label>Intervalo entre opções (minutos)<input name="slot_interval_minutes" type="number" min="5" max="120" step="5" required /></label>
               <label>Limite para cancelamento (horas)<input name="cancellation_notice_hours" type="number" min="0" max="720" required /></label>
+              <label>Lembrete com antecedência (horas)<input name="reminder_hours_before" type="number" min="1" max="168" required /></label>
+              <label class="check full"><input name="reminders_enabled" type="checkbox" /> Ativar lembretes automáticos por e-mail após a aprovação do Google</label>
               <label class="check full"><input name="booking_enabled" type="checkbox" /> Ativar agendamento online quando a integração estiver conectada</label>
             </div>
             <div class="prices-heading">

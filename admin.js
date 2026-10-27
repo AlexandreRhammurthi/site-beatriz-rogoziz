@@ -140,10 +140,11 @@ const loadBookingSettings = async () => {
   ]);
   if (settingsError || rulesError) throw settingsError || rulesError;
   const form = document.querySelector("[data-booking-settings-form]");
-  ["minimum_notice_hours", "booking_horizon_days", "slot_interval_minutes", "cancellation_notice_hours"].forEach((name) => {
+  ["minimum_notice_hours", "booking_horizon_days", "slot_interval_minutes", "cancellation_notice_hours", "reminder_hours_before"].forEach((name) => {
     form.elements[name].value = settings[name];
   });
   form.elements.booking_enabled.checked = settings.booking_enabled;
+  form.elements.reminders_enabled.checked = settings.reminders_enabled;
   rulesList.innerHTML = "";
   (rules || []).forEach(addRuleRow);
   if (!rules?.length) addRuleRow();
@@ -412,6 +413,8 @@ document.querySelector("[data-booking-settings-form]")?.addEventListener("submit
     booking_horizon_days: Number(values.get("booking_horizon_days")),
     slot_interval_minutes: Number(values.get("slot_interval_minutes")),
     cancellation_notice_hours: Number(values.get("cancellation_notice_hours")),
+    reminder_hours_before: Number(values.get("reminder_hours_before")),
+    reminders_enabled: values.get("reminders_enabled") === "on",
     booking_enabled: values.get("booking_enabled") === "on"
   };
   setBusy(button, true);

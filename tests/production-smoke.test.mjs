@@ -65,3 +65,11 @@ test("agendamentos não podem ser consultados anonimamente", { skip: !run }, asy
   });
   assert.ok([401, 403].includes(response.status), `status inesperado: ${response.status}`);
 });
+
+test("executor de lembretes rejeita chamadas públicas", { skip: !run }, async () => {
+  const response = await fetch(`${supabaseUrl}/functions/v1/booking-reminders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: key }
+  });
+  assert.equal(response.status, 401);
+});
