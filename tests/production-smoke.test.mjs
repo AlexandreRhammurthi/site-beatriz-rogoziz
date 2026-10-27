@@ -20,6 +20,8 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(await booking.text(), /href="privacy\.html"/);
   const adminHtml = await admin.text();
   assert.match(adminHtml, /data-blocked-period-form/);
+  assert.match(adminHtml, /data-appointments-filter/);
+  assert.match(adminHtml, /data-appointments-list/);
 });
 
 test("API pública de agendamento permanece operacional", { skip: !run }, async () => {
@@ -36,6 +38,13 @@ test("API pública de agendamento permanece operacional", { skip: !run }, async 
 
 test("bloqueios não podem ser consultados anonimamente", { skip: !run }, async () => {
   const response = await fetch(`${supabaseUrl}/rest/v1/blocked_periods?select=id&limit=1`, {
+    headers: { apikey: key }
+  });
+  assert.ok([401, 403].includes(response.status), `status inesperado: ${response.status}`);
+});
+
+test("agendamentos não podem ser consultados anonimamente", { skip: !run }, async () => {
+  const response = await fetch(`${supabaseUrl}/rest/v1/appointments?select=id&limit=1`, {
     headers: { apikey: key }
   });
   assert.ok([401, 403].includes(response.status), `status inesperado: ${response.status}`);

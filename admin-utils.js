@@ -62,11 +62,54 @@
     return `${formatter.format(new Date(startsAt))} até ${formatter.format(new Date(endsAt))}`;
   };
 
+  const normalizeSearch = (value = "") => String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .trim();
+
+  const appointmentMatches = (appointment, query) => {
+    const needle = normalizeSearch(query);
+    if (!needle) return true;
+    const serviceName = appointment.services?.name || appointment.service_name || "";
+    return normalizeSearch([
+      appointment.customer_name,
+      appointment.customer_email,
+      appointment.customer_phone,
+      serviceName
+    ].filter(Boolean).join(" ")).includes(needle);
+  };
+
+  const appointmentStatusLabel = (status) => ({
+    confirmed: "Confirmado",
+    pending: "Pendente",
+    cancelled: "Cancelado"
+  })[status] || "Desconhecido";
+
+  const formatPhone = (value = "") => {
+    const digits = String(value).replace(/\D/g, "");
+    const local = digits.startsWith("55") ? digits.slice(2) : digits;
+    if (local.length === 11) return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+    if (local.length === 10) return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+    return value;
+  };
+
+  const formatAppointmentDate = (startsAt, endsAt, timeZone = TIMEZONE) => {
+    const date = new Intl.DateTimeFormat("pt-BR", { timeZone, dateStyle: "full" }).format(new Date(startsAt));
+    const time = new Intl.DateTimeFormat("pt-BR", { timeZone, hour: "2-digit", minute: "2-digit" });
+    return `${date}, ${time.format(new Date(startsAt))}–${time.format(new Date(endsAt))}`;
+  };
+
   globalThis.STUDIO_B_ADMIN_UTILS = Object.freeze({
     TIMEZONE,
     addDays,
+    appointmentMatches,
+    appointmentStatusLabel,
     buildBlockedPeriod,
+    formatAppointmentDate,
     formatBlockedPeriod,
+    formatPhone,
+    normalizeSearch,
     partsInZone,
     zonedTimeToUtc
   });

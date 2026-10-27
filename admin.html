@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=6" />
+    <link rel="stylesheet" href="admin.css?v=7" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
-    <script src="admin-utils.js?v=1" defer></script>
-    <script src="admin.js?v=7" defer></script>
+    <script src="admin-utils.js?v=2" defer></script>
+    <script src="admin.js?v=8" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -108,6 +108,27 @@
             <div class="settings-actions"><button class="button primary" type="submit">Adicionar bloqueio</button></div>
           </form>
           <div class="blocked-periods" data-blocked-periods-list aria-live="polite"></div>
+        </section>
+
+        <section class="booking-settings-card" aria-labelledby="appointments-title">
+          <div class="settings-heading">
+            <div>
+              <p class="eyebrow">Atendimentos</p>
+              <h2 id="appointments-title">Agendamentos</h2>
+              <p>Consulte os próximos atendimentos e o histórico recente. Os dados abaixo permanecem restritos à área administrativa.</p>
+            </div>
+          </div>
+          <form class="appointments-filter" data-appointments-filter>
+            <div class="fields-grid appointments-filter-fields">
+              <label class="appointment-search">Buscar cliente ou serviço<input name="search" type="search" placeholder="Nome, e-mail, telefone ou serviço" /></label>
+              <label>Status<select name="status"><option value="all">Todos</option><option value="confirmed">Confirmados</option><option value="pending">Pendentes</option><option value="cancelled">Cancelados</option></select></label>
+              <label>De<input name="start_date" type="date" required /></label>
+              <label>Até<input name="end_date" type="date" required /></label>
+            </div>
+            <div class="settings-actions"><button class="button primary" type="submit">Atualizar lista</button></div>
+          </form>
+          <div class="appointments-summary" data-appointments-summary aria-live="polite"></div>
+          <div class="appointments-list" data-appointments-list aria-live="polite"></div>
         </section>
 
         <div class="dashboard-heading">

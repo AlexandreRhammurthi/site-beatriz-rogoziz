@@ -39,7 +39,7 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 
 ### 1.3 Painel de agendamentos
 
-**Estado:** planejado
+**Estado:** concluído em produção
 
 - Listar próximos agendamentos e histórico recente.
 - Filtrar por status, período, cliente, telefone, e-mail ou serviço.
@@ -110,3 +110,4 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | 27/10/2026 | Roadmap inicial | revisão estrutural | publicado |
 | 27/10/2026 | Link de privacidade no agendamento | 3 testes automatizados + QA móvel | publicado |
 | 27/10/2026 | Bloqueios de datas e horários | 6 testes automatizados + segurança RLS | publicado |
+| 27/10/2026 | Painel administrativo de agendamentos | 6 testes automatizados + QA responsivo | publicado |

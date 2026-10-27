@@ -96,6 +96,25 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .blocked-period p { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.6; }
 .blocked-period-empty { margin: .4rem 0 0; padding: 1rem; border: 1px dashed var(--line); color: var(--muted); text-align: center; }
 .blocked-period [data-remove-block] { border: 0; border-bottom: 1px solid currentColor; padding: .25rem 0; background: transparent; color: var(--danger); font-size: .64rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.appointments-filter { margin-top: .8rem; }
+.appointments-filter-fields { grid-template-columns: 1.5fr .8fr .75fr .75fr; padding-top: .8rem; }
+.appointments-filter select { width: 100%; border: 1px solid var(--line); border-radius: 0; background: white; color: var(--ink); padding: .8rem .85rem; outline: none; }
+.appointments-summary { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1.5rem 0 1rem; }
+.summary-chip { padding: .45rem .7rem; border: 1px solid var(--line); background: #f4efe4; color: var(--muted); font-size: .62rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.summary-chip strong { color: var(--petrol); font-size: .8rem; }
+.appointments-list { display: grid; gap: .75rem; }
+.appointment-card { display: grid; grid-template-columns: minmax(180px, .75fr) minmax(240px, 1fr) minmax(220px, .9fr); gap: 1.2rem; padding: 1.15rem; border: 1px solid var(--line); background: #f4efe4; }
+.appointment-card.cancelled { opacity: .72; }
+.appointment-date { margin: 0 0 .4rem; color: var(--muted); font-size: .72rem; line-height: 1.6; }
+.appointment-card h3 { margin: 0; font-family: var(--serif); font-size: 1.55rem; font-weight: 500; }
+.appointment-customer strong { display: block; margin-bottom: .45rem; font-size: .86rem; }
+.appointment-customer a, .appointment-meta p { display: block; margin: .2rem 0; color: var(--muted); font-size: .72rem; line-height: 1.55; overflow-wrap: anywhere; }
+.appointment-customer a:hover, .appointment-customer a:focus-visible { color: var(--petrol); }
+.appointment-meta { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; }
+.appointment-status { flex: 0 0 auto; padding: .38rem .55rem; border: 1px solid var(--gold); color: var(--gold); font-size: .56rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.appointment-status.confirmed { border-color: var(--petrol); background: var(--petrol); color: white; }
+.appointment-status.cancelled { border-color: var(--danger); color: var(--danger); }
+.appointments-empty { margin: 0; padding: 1.4rem; border: 1px dashed var(--line); color: var(--muted); text-align: center; }
 
 @media (max-width: 900px) {
   .price-row { grid-template-columns: repeat(2, 1fr); }
@@ -103,6 +122,9 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .remove-price { justify-self: start; }
   .availability-row { grid-template-columns: repeat(2,1fr); }
   .settings-heading { flex-direction: column; }
+  .appointments-filter-fields { grid-template-columns: repeat(2, 1fr); }
+  .appointment-card { grid-template-columns: 1fr 1fr; }
+  .appointment-meta { grid-column: 1 / -1; }
 }
 
 @media (max-width: 620px) {
@@ -116,4 +138,6 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .availability-row { grid-template-columns: 1fr; }
   .blocked-period { align-items: start; grid-template-columns: 1fr; }
   .blocked-period [data-remove-block] { justify-self: start; }
+  .appointments-filter-fields, .appointment-card { grid-template-columns: 1fr; }
+  .appointment-meta { grid-column: 1; }
 }

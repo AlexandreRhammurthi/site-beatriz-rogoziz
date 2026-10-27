@@ -10,6 +10,9 @@ const ruleTemplate = document.querySelector("#availability-row-template");
 const rulesList = document.querySelector("[data-rules-list]");
 const blockedPeriodsList = document.querySelector("[data-blocked-periods-list]");
 const blockedPeriodForm = document.querySelector("[data-blocked-period-form]");
+const appointmentsList = document.querySelector("[data-appointments-list]");
+const appointmentsSummary = document.querySelector("[data-appointments-summary]");
+const appointmentsFilter = document.querySelector("[data-appointments-filter]");
 const adminUtils = window.STUDIO_B_ADMIN_UTILS;
 const weekdayLabels = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 
@@ -21,6 +24,7 @@ const escapeHTML = (value = "") => String(value)
   .replaceAll("'", "&#039;");
 
 let statusTimer;
+let appointmentsCache = [];
 const callbackUrl = () => `${window.location.origin}${window.location.pathname}`;
 
 const friendlyAuthError = (error) => {
@@ -192,9 +196,82 @@ const loadBlockedPeriods = async () => {
   setBlockedPeriodDefaults();
 };
 
+const setAppointmentFilterDefaults = () => {
+  if (!appointmentsFilter || !adminUtils) return;
+  const today = adminUtils.partsInZone(new Date(), adminUtils.TIMEZONE);
+  const dateValue = `${today.year}-${today.month}-${today.day}`;
+  appointmentsFilter.elements.start_date.value ||= adminUtils.addDays(dateValue, -30);
+  appointmentsFilter.elements.end_date.value ||= adminUtils.addDays(dateValue, 90);
+};
+
+const appointmentMarkup = (appointment) => {
+  const statusLabel = adminUtils.appointmentStatusLabel(appointment.status);
+  const serviceName = appointment.services?.name || "Serviço removido";
+  const phone = adminUtils.formatPhone(appointment.customer_phone);
+  const syncLabel = appointment.calendar_sync_requested ? "Convite de agenda solicitado" : "Sem convite de agenda";
+  return `
+    <article class="appointment-card ${escapeHTML(appointment.status)}">
+      <div>
+        <p class="appointment-date">${escapeHTML(adminUtils.formatAppointmentDate(appointment.starts_at, appointment.ends_at))}</p>
+        <h3>${escapeHTML(serviceName)}</h3>
+      </div>
+      <div class="appointment-customer">
+        <strong>${escapeHTML(appointment.customer_name)}</strong>
+        <a href="mailto:${encodeURIComponent(appointment.customer_email)}">${escapeHTML(appointment.customer_email)}</a>
+        <a href="tel:+${escapeHTML(appointment.customer_phone)}">${escapeHTML(phone)}</a>
+      </div>
+      <div class="appointment-meta">
+        <p>${escapeHTML(syncLabel)}</p>
+        <span class="appointment-status ${escapeHTML(appointment.status)}">${escapeHTML(statusLabel)}</span>
+      </div>
+    </article>
+  `;
+};
+
+const renderAppointments = () => {
+  if (!appointmentsList || !appointmentsSummary) return;
+  const search = appointmentsFilter?.elements.search.value || "";
+  const visible = appointmentsCache.filter((appointment) => adminUtils.appointmentMatches(appointment, search));
+  const count = (status) => visible.filter((appointment) => appointment.status === status).length;
+  appointmentsSummary.innerHTML = `
+    <span class="summary-chip"><strong>${visible.length}</strong> exibidos</span>
+    <span class="summary-chip"><strong>${count("confirmed")}</strong> confirmados</span>
+    <span class="summary-chip"><strong>${count("pending")}</strong> pendentes</span>
+    <span class="summary-chip"><strong>${count("cancelled")}</strong> cancelados</span>
+  `;
+  appointmentsList.innerHTML = visible.length
+    ? visible.map(appointmentMarkup).join("")
+    : '<p class="appointments-empty">Nenhum agendamento encontrado para os filtros selecionados.</p>';
+};
+
+const loadAppointments = async () => {
+  if (!appointmentsFilter || !adminUtils) return;
+  setAppointmentFilterDefaults();
+  const startDate = appointmentsFilter.elements.start_date.value;
+  const endDate = appointmentsFilter.elements.end_date.value;
+  if (!startDate || !endDate || startDate > endDate) {
+    throw new Error("O período de consulta dos agendamentos é inválido.");
+  }
+  const start = adminUtils.zonedTimeToUtc(startDate, "00:00:00");
+  const end = adminUtils.zonedTimeToUtc(adminUtils.addDays(endDate, 1), "00:00:00");
+  let query = client
+    .from("appointments")
+    .select("id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, calendar_sync_requested, services(name)")
+    .gte("starts_at", start.toISOString())
+    .lt("starts_at", end.toISOString())
+    .order("starts_at")
+    .limit(500);
+  const statusFilter = appointmentsFilter.elements.status.value;
+  if (statusFilter !== "all") query = query.eq("status", statusFilter);
+  const { data, error } = await query;
+  if (error) throw error;
+  appointmentsCache = data || [];
+  renderAppointments();
+};
+
 const showDashboard = async () => {
   setView("dashboard");
-  await Promise.all([loadServices(), loadBookingSettings(), loadBlockedPeriods()]);
+  await Promise.all([loadServices(), loadBookingSettings(), loadBlockedPeriods(), loadAppointments()]);
 };
 
 const handleSession = async (session) => {
@@ -399,6 +476,21 @@ blockedPeriodsList?.addEventListener("click", async (event) => {
   showStatus("Bloqueio removido.");
   await loadBlockedPeriods();
 });
+
+appointmentsFilter?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  setBusy(button, true);
+  try {
+    await loadAppointments();
+  } catch (error) {
+    showStatus(error.message || "Não foi possível carregar os agendamentos.", true);
+  } finally {
+    setBusy(button, false);
+  }
+});
+
+appointmentsFilter?.elements.search.addEventListener("input", renderAppointments);
 
 servicesList?.addEventListener("click", async (event) => {
   const editor = event.target.closest("[data-service-id]");
