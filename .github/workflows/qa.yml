@@ -1,0 +1,44 @@
+name: QA contínuo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  automated-tests:
+    name: Testes automatizados
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validar JavaScript
+        run: |
+          node --check admin.js
+          node --check admin-utils.js
+          node --check booking.js
+          node --check manage-booking.js
+      - name: Executar testes
+        run: node --test tests/*.test.mjs
+
+  production-smoke:
+    name: Smoke test de produção
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verificar domínio, API e isolamento de dados
+        env:
+          RUN_PRODUCTION_SMOKE: "1"
+        run: node --test tests/production-smoke.test.mjs

@@ -97,6 +97,26 @@ Não foram adicionados credenciais ou depoimentos não fornecidos.
 - `config.js`: número e mensagem do WhatsApp, além do conteúdo de fallback;
 - `supabase/`: configuração local e migrações do banco;
 - `supabase/functions/booking-api/`: disponibilidade, integração Google, e-mails e cancelamentos;
+- `supabase/functions/booking-reminders/`: executor interno e idempotente de lembretes;
 - `scripts/google-oauth-helper.mjs`: autorização local da conta do Studio B;
+- `tests/`: cenários automatizados de contrato, regras, segurança e smoke de produção;
+- `ROADMAP.md`: sequência de evolução e registro de entregas;
 - `assets/`: fotos e vídeo originais enviados.
+
+## Qualidade e testes
+
+Execute toda a suíte local sem alterar dados de produção:
+
+```powershell
+node --test tests/*.test.mjs
+```
+
+Para incluir os smoke tests públicos e verificações de isolamento anônimo:
+
+```powershell
+$env:RUN_PRODUCTION_SMOKE='1'
+node --test tests/*.test.mjs
+```
+
+O workflow `.github/workflows/qa.yml` repete os testes a cada alteração e executa smoke tests de produção a cada seis horas. Os testes públicos são somente leitura ou usam entradas deliberadamente inválidas.
 

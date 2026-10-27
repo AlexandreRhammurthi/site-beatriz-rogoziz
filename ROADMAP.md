@@ -86,7 +86,7 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 
 ## Fase 5 — Segurança e confiabilidade
 
-**Estado:** planejado
+**Estado:** concluído em produção
 
 - Revisar RLS e privilégios das tabelas do Supabase.
 - Reforçar limites contra automação abusiva.
@@ -98,7 +98,7 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 
 ## Fase 6 — Qualidade contínua
 
-**Estado:** planejado
+**Estado:** concluído em produção
 
 - Consolidar testes de contrato, unidade, integração e smoke.
 - Executar verificações em cada mudança antes da publicação.
@@ -117,3 +117,5 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | 27/10/2026 | Lembretes automáticos | 6 testes automatizados; envio mantido desligado | backend publicado, ativação pendente |
 | 27/10/2026 | Capacidade operacional e exportação | 6 testes automatizados | publicado |
 | 27/10/2026 | Acompanhamento e observações privadas | 5 testes automatizados + RLS existente | publicado |
+| 27/10/2026 | Auditoria de segurança | 7 testes automatizados | publicado |
+| 27/10/2026 | QA contínuo no GitHub | testes por alteração + smoke a cada 6 horas | publicado |
