@@ -11,7 +11,9 @@ desktop.ini
 
 # Logs e temporários
 *.log
+.preview/
 
 # Credenciais locais
 .env
 supabase/functions/.env
+client_secret*.json
