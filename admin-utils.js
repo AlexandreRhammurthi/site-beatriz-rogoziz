@@ -86,6 +86,12 @@
     cancelled: "Cancelado"
   })[status] || "Desconhecido";
 
+  const attendanceStatusLabel = (status) => ({
+    scheduled: "Agendado",
+    completed: "Concluído",
+    no_show: "Não compareceu"
+  })[status] || "Agendado";
+
   const formatPhone = (value = "") => {
     const digits = String(value).replace(/\D/g, "");
     const local = digits.startsWith("55") ? digits.slice(2) : digits;
@@ -107,6 +113,7 @@
     addDays,
     appointmentMatches,
     appointmentStatusLabel,
+    attendanceStatusLabel,
     buildBlockedPeriod,
     csvCell,
     formatAppointmentDate,

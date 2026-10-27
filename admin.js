@@ -222,9 +222,23 @@ const appointmentMarkup = (appointment) => {
         <a href="tel:+${escapeHTML(appointment.customer_phone)}">${escapeHTML(phone)}</a>
       </div>
       <div class="appointment-meta">
-        <p>${escapeHTML(syncLabel)}</p>
+        <p>${escapeHTML(syncLabel)}<br>Acompanhamento: ${escapeHTML(adminUtils.attendanceStatusLabel(appointment.attendance_status))}</p>
         <span class="appointment-status ${escapeHTML(appointment.status)}">${escapeHTML(statusLabel)}</span>
       </div>
+      <details class="appointment-admin-tools">
+        <summary>Acompanhamento interno</summary>
+        <form data-appointment-admin-form data-appointment-id="${escapeHTML(appointment.id)}">
+          <label>Comparecimento
+            <select name="attendance_status">
+              <option value="scheduled" ${appointment.attendance_status === "scheduled" ? "selected" : ""}>Agendado</option>
+              <option value="completed" ${appointment.attendance_status === "completed" ? "selected" : ""}>Concluído</option>
+              <option value="no_show" ${appointment.attendance_status === "no_show" ? "selected" : ""}>Não compareceu</option>
+            </select>
+          </label>
+          <label>Observações privadas<textarea name="admin_notes" maxlength="2000" placeholder="Informações visíveis somente no painel">${escapeHTML(appointment.admin_notes || "")}</textarea></label>
+          <button class="button primary" type="submit">Salvar acompanhamento</button>
+        </form>
+      </details>
     </article>
   `;
 };
@@ -257,7 +271,7 @@ const loadAppointments = async () => {
   const end = adminUtils.zonedTimeToUtc(adminUtils.addDays(endDate, 1), "00:00:00");
   let query = client
     .from("appointments")
-    .select("id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, calendar_sync_requested, services(name)")
+    .select("id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, attendance_status, admin_notes, calendar_sync_requested, services(name)")
     .gte("starts_at", start.toISOString())
     .lt("starts_at", end.toISOString())
     .order("starts_at")
@@ -497,9 +511,29 @@ appointmentsFilter?.addEventListener("submit", async (event) => {
 
 appointmentsFilter?.elements.search.addEventListener("input", renderAppointments);
 
+appointmentsList?.addEventListener("submit", async (event) => {
+  const form = event.target.closest("[data-appointment-admin-form]");
+  if (!form) return;
+  event.preventDefault();
+  const button = event.submitter;
+  const values = new FormData(form);
+  const update = {
+    attendance_status: String(values.get("attendance_status")),
+    admin_notes: String(values.get("admin_notes") || "").trim()
+  };
+  setBusy(button, true);
+  const { error } = await client.from("appointments").update(update).eq("id", form.dataset.appointmentId);
+  setBusy(button, false);
+  if (error) return showStatus(error.message, true);
+  const appointment = appointmentsCache.find((item) => item.id === form.dataset.appointmentId);
+  if (appointment) Object.assign(appointment, update);
+  renderAppointments();
+  showStatus("Acompanhamento salvo.");
+});
+
 document.querySelector("[data-export-appointments]")?.addEventListener("click", () => {
   if (!appointmentsCache.length) return showStatus("Não há agendamentos carregados para exportar.", true);
-  const header = ["Data e horário", "Serviço", "Cliente", "E-mail", "WhatsApp", "Status", "Convite de agenda"];
+  const header = ["Data e horário", "Serviço", "Cliente", "E-mail", "WhatsApp", "Status", "Comparecimento", "Convite de agenda", "Observações privadas"];
   const rows = appointmentsCache.map((appointment) => [
     adminUtils.formatAppointmentDate(appointment.starts_at, appointment.ends_at),
     appointment.services?.name || "Serviço removido",
@@ -507,7 +541,9 @@ document.querySelector("[data-export-appointments]")?.addEventListener("click", 
     appointment.customer_email,
     adminUtils.formatPhone(appointment.customer_phone),
     adminUtils.appointmentStatusLabel(appointment.status),
-    appointment.calendar_sync_requested ? "Sim" : "Não"
+    adminUtils.attendanceStatusLabel(appointment.attendance_status),
+    appointment.calendar_sync_requested ? "Sim" : "Não",
+    appointment.admin_notes || ""
   ]);
   const csv = [header, ...rows].map((row) => row.map(adminUtils.csvCell).join(";")).join("\r\n");
   const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
