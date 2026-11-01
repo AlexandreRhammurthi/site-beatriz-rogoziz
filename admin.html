@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=12" />
+    <link rel="stylesheet" href="admin.css?v=13" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
     <script src="admin-utils.js?v=4" defer></script>
-    <script src="admin.js?v=13" defer></script>
+    <script src="admin.js?v=14" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -46,7 +46,42 @@
             <button class="button primary" type="submit" data-signin>Entrar</button>
             <button class="button secondary" type="button" data-signup>Criar conta</button>
           </div>
+          <button class="forgot-password-button" type="button" data-forgot-password>Esqueci minha senha</button>
           <button class="resend-button" type="button" data-resend>Reenviar e-mail de confirmação</button>
+        </form>
+      </section>
+
+      <section class="auth-panel" data-reset-request-panel hidden>
+        <p class="eyebrow">Recuperação de acesso</p>
+        <h1>Redefinir senha</h1>
+        <p>Informe o e-mail da conta administrativa. Enviaremos um link seguro para criar uma nova senha.</p>
+        <form data-reset-request-form>
+          <label>E-mail<input type="email" name="email" autocomplete="email" required /></label>
+          <div class="auth-actions">
+            <button class="button primary" type="submit">Enviar link</button>
+            <button class="button secondary" type="button" data-back-to-login>Voltar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="auth-panel" data-reset-password-panel hidden>
+        <p class="eyebrow">Recuperação de acesso</p>
+        <h1>Crie sua nova senha</h1>
+        <p>Use pelo menos 8 caracteres. Depois de salvar, o painel será aberto normalmente.</p>
+        <form data-reset-password-form>
+          <label>Nova senha
+            <span class="password-control">
+              <input type="password" name="password" autocomplete="new-password" minlength="8" required />
+              <button type="button" data-toggle-password aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+            </span>
+          </label>
+          <label>Confirmar nova senha
+            <span class="password-control">
+              <input type="password" name="password_confirmation" autocomplete="new-password" minlength="8" required />
+              <button type="button" data-toggle-password aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+            </span>
+          </label>
+          <div class="auth-actions"><button class="button primary" type="submit">Salvar nova senha</button></div>
         </form>
       </section>
 

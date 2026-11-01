@@ -8,6 +8,8 @@ const serviceSelect = form?.elements.service_id;
 const dateInput = form?.elements.date;
 const startsAtInput = form?.elements.starts_at;
 const slotsContainer = document.querySelector("[data-slots]");
+const availableDatesContainer = document.querySelector("[data-available-dates]");
+const selectedDateCopy = document.querySelector("[data-selected-date]");
 const summary = document.querySelector("[data-summary]");
 let config = null;
 
@@ -45,13 +47,12 @@ const showStep = (step) => {
   document.querySelector(".booking-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
-const brazilDate = (date) => {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: config?.timezone || "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
-};
-
 const selectedService = () => config?.services.find((service) => service.id === serviceSelect.value);
+
+const formatAvailableDate = (dateValue, options) => new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "UTC",
+  ...options
+}).format(new Date(`${dateValue}T12:00:00Z`));
 
 const validateStep = (step) => {
   const fields = form.querySelectorAll(`[data-step="${step}"] input:not([type="hidden"]), [data-step="${step}"] select`);
@@ -62,7 +63,41 @@ const validateStep = (step) => {
     showStatus("Selecione um dos horários disponíveis.");
     return false;
   }
+  if (step === 1 && !dateInput.value) {
+    showStatus("Escolha uma das datas disponíveis.");
+    return false;
+  }
   return true;
+};
+
+const loadAvailableDates = async () => {
+  dateInput.value = "";
+  startsAtInput.value = "";
+  selectedDateCopy.textContent = "";
+  slotsContainer.innerHTML = '<p class="empty-state">Escolha uma data para consultar os horários.</p>';
+  if (!serviceSelect.value) {
+    availableDatesContainer.innerHTML = '<p class="empty-state">Escolha um serviço para consultar as próximas datas disponíveis.</p>';
+    return;
+  }
+  availableDatesContainer.innerHTML = '<p class="empty-state">Consultando as próximas datas disponíveis…</p>';
+  showStatus();
+  try {
+    const result = await api("available-dates", { service_id: serviceSelect.value });
+    if (!result.dates.length) {
+      availableDatesContainer.innerHTML = '<p class="empty-state">Não há datas disponíveis no período atual. Fale com o Studio B pelo WhatsApp para outras possibilidades.</p>';
+      return;
+    }
+    availableDatesContainer.innerHTML = result.dates.map((dateValue) => `
+      <button class="available-date" type="button" data-date-value="${dateValue}" aria-pressed="false">
+        <span>${escapeHTML(formatAvailableDate(dateValue, { weekday: "short" }).replace(".", ""))}</span>
+        <strong>${escapeHTML(formatAvailableDate(dateValue, { day: "2-digit" }))}</strong>
+        <small>${escapeHTML(formatAvailableDate(dateValue, { month: "short" }).replace(".", ""))}</small>
+      </button>
+    `).join("");
+  } catch (error) {
+    availableDatesContainer.innerHTML = '<p class="empty-state">Não foi possível consultar as datas disponíveis.</p>';
+    showStatus(error.message);
+  }
 };
 
 const loadSlots = async () => {
@@ -94,8 +129,19 @@ slotsContainer?.addEventListener("click", (event) => {
   showStatus();
 });
 
-dateInput?.addEventListener("change", loadSlots);
-serviceSelect?.addEventListener("change", () => { if (dateInput.value) loadSlots(); });
+availableDatesContainer?.addEventListener("click", async (event) => {
+  const dateButton = event.target.closest("[data-date-value]");
+  if (!dateButton) return;
+  availableDatesContainer.querySelectorAll("[data-date-value]").forEach((button) => {
+    button.classList.toggle("selected", button === dateButton);
+    button.setAttribute("aria-pressed", String(button === dateButton));
+  });
+  dateInput.value = dateButton.dataset.dateValue;
+  selectedDateCopy.textContent = formatAvailableDate(dateInput.value, { dateStyle: "full" });
+  await loadSlots();
+});
+
+serviceSelect?.addEventListener("change", loadAvailableDates);
 
 form?.addEventListener("click", (event) => {
   const next = event.target.closest("[data-next]");
@@ -104,7 +150,7 @@ form?.addEventListener("click", (event) => {
   if (!next) return;
   const current = Number(next.closest("[data-step]").dataset.step);
   if (!validateStep(current)) return;
-  if (Number(next.dataset.next) === 3) {
+  if (Number(next.dataset.next) === 4) {
     const service = selectedService();
     const start = new Date(startsAtInput.value);
     summary.innerHTML = `<strong>${escapeHTML(service.name)}</strong><br>${escapeHTML(new Intl.DateTimeFormat("pt-BR", { timeZone: config.timezone, dateStyle: "full", timeStyle: "short" }).format(start))}<br>${Number(service.duration_minutes)} minutos`;
@@ -151,14 +197,11 @@ const init = async () => {
       return;
     }
     serviceSelect.insertAdjacentHTML("beforeend", config.services.map((service) => `<option value="${escapeHTML(service.id)}">${escapeHTML(service.name)} — ${Number(service.duration_minutes)} min</option>`).join(""));
-    const today = new Date();
-    const max = new Date(Date.now() + config.booking_horizon_days * 86400000);
-    dateInput.min = brazilDate(today);
-    dateInput.max = brazilDate(max);
     const requestedService = new URLSearchParams(window.location.search).get("service");
     if (requestedService && config.services.some((service) => service.id === requestedService)) serviceSelect.value = requestedService;
     form.hidden = false;
     showStep(1);
+    if (serviceSelect.value) await loadAvailableDates();
   } catch (error) {
     loading.hidden = true;
     configError.hidden = false;

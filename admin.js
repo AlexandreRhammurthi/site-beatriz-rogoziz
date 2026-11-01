@@ -1,5 +1,7 @@
 const client = window.createStudioSupabaseClient?.();
 const authPanel = document.querySelector("[data-auth-panel]");
+const resetRequestPanel = document.querySelector("[data-reset-request-panel]");
+const resetPasswordPanel = document.querySelector("[data-reset-password-panel]");
 const claimPanel = document.querySelector("[data-claim-panel]");
 const dashboard = document.querySelector("[data-dashboard]");
 const logoutButton = document.querySelector("[data-logout]");
@@ -32,6 +34,7 @@ const escapeHTML = (value = "") => String(value)
 let statusTimer;
 let appointmentsCache = [];
 let manualBookingConfig = null;
+let passwordRecoveryMode = false;
 let currentAdminView = "home";
 const loadedAdminViews = new Set();
 const callbackUrl = () => `${window.location.origin}${window.location.pathname}`;
@@ -55,9 +58,11 @@ const showStatus = (message, isError = false) => {
 
 const setView = (view) => {
   authPanel.hidden = view !== "auth";
+  resetRequestPanel.hidden = view !== "reset-request";
+  resetPasswordPanel.hidden = view !== "reset-password";
   claimPanel.hidden = view !== "claim";
   dashboard.hidden = view !== "dashboard";
-  logoutButton.hidden = view === "auth";
+  logoutButton.hidden = view === "auth" || view === "reset-request";
   adminHomeButton.hidden = view !== "dashboard" || currentAdminView === "home";
 };
 
@@ -477,6 +482,10 @@ const showDashboard = async () => {
 };
 
 const handleSession = async (session) => {
+  if (passwordRecoveryMode) {
+    setView(session ? "reset-password" : "auth");
+    return;
+  }
   if (!session) {
     setView("auth");
     return;
@@ -535,7 +544,50 @@ document.querySelector("[data-resend]")?.addEventListener("click", async (event)
   showStatus("Novo e-mail enviado. Abra o link recebido para concluir a confirmação.");
 });
 
-document.querySelector("[data-toggle-password]")?.addEventListener("click", (event) => {
+document.querySelector("[data-forgot-password]")?.addEventListener("click", () => {
+  const loginEmail = document.querySelector('[data-auth-form] [name="email"]')?.value.trim();
+  const resetEmail = document.querySelector('[data-reset-request-form] [name="email"]');
+  if (loginEmail && resetEmail) resetEmail.value = loginEmail;
+  setView("reset-request");
+  resetEmail?.focus();
+});
+
+document.querySelector("[data-back-to-login]")?.addEventListener("click", () => setView("auth"));
+
+document.querySelector("[data-reset-request-form]")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  const email = String(new FormData(event.currentTarget).get("email") || "").trim();
+  setBusy(button, true);
+  const { error } = await client.auth.resetPasswordForEmail(email, {
+    redirectTo: callbackUrl()
+  });
+  setBusy(button, false);
+  if (error) return showStatus(friendlyAuthError(error), true);
+  event.currentTarget.reset();
+  setView("auth");
+  showStatus("Se o e-mail estiver cadastrado, enviaremos um link seguro para redefinir a senha.");
+});
+
+document.querySelector("[data-reset-password-form]")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  const values = new FormData(event.currentTarget);
+  const password = String(values.get("password") || "");
+  const confirmation = String(values.get("password_confirmation") || "");
+  if (password !== confirmation) return showStatus("As senhas informadas não coincidem.", true);
+  setBusy(button, true);
+  const { error } = await client.auth.updateUser({ password });
+  setBusy(button, false);
+  if (error) return showStatus(friendlyAuthError(error), true);
+  passwordRecoveryMode = false;
+  event.currentTarget.reset();
+  showStatus("Senha atualizada com sucesso.");
+  const { data } = await client.auth.getSession();
+  await handleSession(data.session);
+});
+
+document.querySelectorAll("[data-toggle-password]").forEach((toggle) => toggle.addEventListener("click", (event) => {
   const button = event.currentTarget;
   const input = button.closest(".password-control").querySelector("input");
   const willShow = input.type === "password";
@@ -543,7 +595,7 @@ document.querySelector("[data-toggle-password]")?.addEventListener("click", (eve
   button.textContent = willShow ? "Ocultar" : "Mostrar";
   button.setAttribute("aria-label", willShow ? "Ocultar senha" : "Mostrar senha");
   button.setAttribute("aria-pressed", String(willShow));
-});
+}));
 
 document.querySelector("[data-claim-form]")?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -559,6 +611,7 @@ document.querySelector("[data-claim-form]")?.addEventListener("submit", async (e
 
 logoutButton?.addEventListener("click", async () => {
   await client.auth.signOut();
+  passwordRecoveryMode = false;
   loadedAdminViews.clear();
   appointmentsCache = [];
   manualBookingConfig = null;
@@ -858,8 +911,10 @@ document.querySelector("[data-add-service]")?.addEventListener("click", async (e
 
 const processAuthCallback = async () => {
   const url = new URL(window.location.href);
+  passwordRecoveryMode = url.searchParams.get("mode") === "reset-password";
   const queryError = url.searchParams.get("error_description");
   const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+  if (hash.get("type") === "recovery") passwordRecoveryMode = true;
   const callbackError = queryError || hash.get("error_description");
   if (callbackError) throw new Error(decodeURIComponent(callbackError.replaceAll("+", " ")));
 
@@ -874,7 +929,12 @@ const processAuthCallback = async () => {
   if (result?.error) throw result.error;
   if (result) {
     window.history.replaceState({}, document.title, callbackUrl());
-    showStatus("E-mail confirmado. Acesso liberado.");
+    if (passwordRecoveryMode) {
+      setView("reset-password");
+      showStatus("Link validado. Crie sua nova senha.");
+    } else {
+      showStatus("E-mail confirmado. Acesso liberado.");
+    }
   }
 };
 
@@ -882,7 +942,10 @@ if (!client) {
   setView("auth");
   showStatus("A conexão com o Supabase não foi carregada.", true);
 } else {
-  client.auth.onAuthStateChange((_event, session) => setTimeout(() => handleSession(session), 0));
+  client.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") passwordRecoveryMode = true;
+    setTimeout(() => handleSession(session), 0);
+  });
   processAuthCallback()
     .catch((error) => showStatus(`Não foi possível confirmar o e-mail: ${friendlyAuthError(error)}`, true))
     .finally(() => client.auth.getSession().then(({ data }) => handleSession(data.session)));

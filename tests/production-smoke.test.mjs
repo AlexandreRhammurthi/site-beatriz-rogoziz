@@ -29,6 +29,7 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(homeHtml, />Agendar online</);
   assert.match(homeHtml, /data-whatsapp/);
   assert.match(await booking.text(), /href="privacy\.html"/);
+  assert.match(await (await fetch(`${baseUrl}/booking.html?v=${stamp + 1}`)).text(), /data-available-dates/);
   const adminHtml = await admin.text();
   assert.match(adminHtml, /data-admin-view="home"/);
   assert.match(adminHtml, /data-admin-view="schedule-menu"/);
@@ -42,6 +43,8 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-appointments-filter/);
   assert.match(adminHtml, /data-appointments-list/);
   assert.match(adminHtml, /data-manual-booking-form/);
+  assert.match(adminHtml, /data-reset-request-form/);
+  assert.match(adminHtml, /data-reset-password-form/);
   assert.match(await manage.text(), /data-reschedule-form/);
   assert.match(await servicesFaq.text(), /FAQ de Serviços e valores/);
   assert.match(await scheduleFaq.text(), /Intervalo não é preparação/);
@@ -57,6 +60,24 @@ test("API pública de agendamento permanece operacional", { skip: !run }, async 
   const config = await response.json();
   assert.equal(config.enabled, true);
   assert.ok(Array.isArray(config.services) && config.services.length > 0);
+});
+
+test("API pública lista datas realmente disponíveis", { skip: !run }, async () => {
+  const configResponse = await fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: key, Origin: baseUrl },
+    body: JSON.stringify({ action: "config" })
+  });
+  const config = await configResponse.json();
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: key, Origin: baseUrl },
+    body: JSON.stringify({ action: "available-dates", service_id: config.services[0].id })
+  });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.ok(Array.isArray(result.dates));
+  assert.ok(result.dates.every((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)));
 });
 
 test("ações administrativas da agenda rejeitam chamadas anônimas", { skip: !run }, async () => {

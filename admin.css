@@ -43,7 +43,8 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .password-control button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .auth-panel label + label, .claim-panel label + label { margin-top: 1rem; }
 .auth-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.5rem; }
-.resend-button { margin-top: 1rem; padding: .25rem 0; border: 0; border-bottom: 1px solid var(--gold); background: transparent; color: var(--muted); font-size: .65rem; letter-spacing: .06em; }
+.resend-button, .forgot-password-button { margin-top: 1rem; padding: .25rem 0; border: 0; border-bottom: 1px solid var(--gold); background: transparent; color: var(--muted); font-size: .65rem; letter-spacing: .06em; }
+.forgot-password-button { margin-right: 1.2rem; }
 .button { min-height: 44px; padding: .8rem 1.35rem; border: 1px solid var(--petrol); font-size: .67rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
 .button.primary { background: var(--petrol); color: white; }
 .button.secondary { background: transparent; color: var(--petrol); }

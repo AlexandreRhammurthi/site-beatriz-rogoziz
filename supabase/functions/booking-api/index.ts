@@ -172,6 +172,12 @@ const zonedTimeToUtc = (
 const weekdayForDate = (dateValue: string) =>
   new Date(`${dateValue}T12:00:00Z`).getUTCDay();
 
+const addDateValue = (dateValue: string, days: number) => {
+  const date = new Date(`${dateValue}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
 const recoveryStart = (payload: Record<string, unknown>, timezone: string) => {
   const dateValue = String(payload.date || "");
   const timeValue = String(payload.time || "");
@@ -385,6 +391,138 @@ const getAvailability = async (
     }
   }
   return { service, slots };
+};
+
+const getAvailableDates = async (
+  serviceId: string,
+  settings: BookingSettings,
+) => {
+  const { data: service, error: serviceError } = await admin
+    .from("services")
+    .select("id, name, duration_minutes")
+    .eq("id", serviceId)
+    .eq("is_active", true)
+    .single();
+  if (serviceError || !service) {
+    return { error: "Serviço indisponível.", status: 404 };
+  }
+
+  const now = new Date();
+  const todayParts = partsInZone(now, settings.timezone);
+  const firstDate = `${todayParts.year}-${todayParts.month}-${todayParts.day}`;
+  const lastDate = addDateValue(firstDate, settings.booking_horizon_days);
+  const rangeStart = zonedTimeToUtc(firstDate, "00:00:00", settings.timezone);
+  const rangeEnd = zonedTimeToUtc(
+    addDateValue(lastDate, 1),
+    "00:00:00",
+    settings.timezone,
+  );
+  const earliest = new Date(
+    now.getTime() + settings.minimum_notice_hours * 3600000,
+  );
+  const latest = new Date(
+    now.getTime() + settings.booking_horizon_days * 86400000,
+  );
+
+  const [
+    { data: rules, error: rulesError },
+    { data: appointments, error: appointmentsError },
+    { data: blocked, error: blockedError },
+    googleBusy,
+  ] = await Promise.all([
+    admin.from("availability_rules").select(
+      "weekday, start_time, end_time, pause_start_time, pause_end_time",
+    ).eq("is_active", true).order("weekday").order("start_time"),
+    admin.from("appointments").select("starts_at, ends_at").in("status", [
+      "pending",
+      "confirmed",
+    ]).lt("starts_at", rangeEnd.toISOString()).gt(
+      "ends_at",
+      rangeStart.toISOString(),
+    ),
+    admin.from("blocked_periods").select("starts_at, ends_at").lt(
+      "starts_at",
+      rangeEnd.toISOString(),
+    ).gt("ends_at", rangeStart.toISOString()),
+    getGoogleBusy(rangeStart, rangeEnd, settings.timezone),
+  ]);
+  if (rulesError) throw rulesError;
+  if (appointmentsError) throw appointmentsError;
+  if (blockedError) throw blockedError;
+
+  const unavailable = [
+    ...googleBusy,
+    ...(appointments || []).map((item) => ({
+      start: new Date(item.starts_at),
+      end: new Date(item.ends_at),
+    })),
+    ...(blocked || []).map((item) => ({
+      start: new Date(item.starts_at),
+      end: new Date(item.ends_at),
+    })),
+  ];
+  const dates: string[] = [];
+
+  for (let dayOffset = 0; dayOffset <= settings.booking_horizon_days; dayOffset += 1) {
+    const dateValue = addDateValue(firstDate, dayOffset);
+    const dayStart = zonedTimeToUtc(dateValue, "00:00:00", settings.timezone);
+    const dayEnd = zonedTimeToUtc(
+      addDateValue(dateValue, 1),
+      "00:00:00",
+      settings.timezone,
+    );
+    if (dayEnd <= earliest || dayStart > latest) continue;
+
+    const appointmentsOnDay = (appointments || []).filter((item) =>
+      new Date(item.starts_at) < dayEnd && new Date(item.ends_at) > dayStart
+    ).length;
+    if (
+      settings.daily_booking_limit > 0 &&
+      appointmentsOnDay >= settings.daily_booking_limit
+    ) continue;
+
+    const dayRules = (rules || []).filter((rule) =>
+      rule.weekday === weekdayForDate(dateValue)
+    );
+    let hasAvailableSlot = false;
+    for (const rule of dayRules) {
+      const windowStart = zonedTimeToUtc(
+        dateValue,
+        rule.start_time,
+        settings.timezone,
+      );
+      const windowEnd = zonedTimeToUtc(
+        dateValue,
+        rule.end_time,
+        settings.timezone,
+      );
+      const pauseStart = rule.pause_start_time
+        ? zonedTimeToUtc(dateValue, rule.pause_start_time, settings.timezone)
+        : null;
+      const pauseEnd = rule.pause_end_time
+        ? zonedTimeToUtc(dateValue, rule.pause_end_time, settings.timezone)
+        : null;
+      for (
+        let cursor = windowStart.getTime();
+        cursor < windowEnd.getTime();
+        cursor += settings.slot_interval_minutes * 60000
+      ) {
+        const start = new Date(cursor);
+        const end = new Date(cursor + service.duration_minutes * 60000);
+        if (
+          end > windowEnd || start < earliest || start > latest ||
+          overlaps(start, end, unavailable, settings.buffer_minutes) ||
+          (pauseStart && pauseEnd && start < pauseEnd && end > pauseStart)
+        ) continue;
+        hasAvailableSlot = true;
+        break;
+      }
+      if (hasAvailableSlot) break;
+    }
+    if (hasAvailableSlot) dates.push(dateValue);
+  }
+
+  return { service, dates };
 };
 
 const createGoogleEvent = async (
@@ -663,6 +801,17 @@ Deno.serve(async (request) => {
       return json(origin, {
         error: "O agendamento online ainda está em configuração.",
       }, 503);
+    }
+
+    if (action === "available-dates") {
+      if (!isUuid(payload.service_id)) {
+        return json(origin, { error: "Serviço inválido." }, 400);
+      }
+      const result = await getAvailableDates(payload.service_id, settings);
+      if ("error" in result) {
+        return json(origin, { error: result.error }, result.status);
+      }
+      return json(origin, result);
     }
 
     if (action === "availability" || action === "admin-availability") {
