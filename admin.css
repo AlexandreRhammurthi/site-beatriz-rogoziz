@@ -173,6 +173,35 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .manual-booking-success .button { margin: .5rem .8rem .5rem 0; }
 .appointment-source { display: inline-block; margin-top: .45rem; color: var(--gold); font-size: .56rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 
+.package-fields select, .packages-filter select, .package-edit-form select, .package-session-form select { width: 100%; min-height: 43px; border: 1px solid var(--line); border-radius: 0; background: white; color: var(--ink); padding: .8rem .85rem; outline: none; }
+.package-fields .optional { color: var(--muted); font-size: .55rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.packages-filter { margin-top: .5rem; }
+.packages-filter-fields { grid-template-columns: 1.5fr .7fr; padding: .8rem 0 0; }
+.packages-summary { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1.4rem 0 1rem; }
+.packages-list { display: grid; gap: 1rem; }
+.package-card { padding: 1.2rem; border: 1px solid var(--line); background: #f4efe4; }
+.package-card-head { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1rem; align-items: start; }
+.package-card h3 { margin: .25rem 0 .35rem; font-family: var(--serif); font-size: 1.8rem; font-weight: 500; }
+.package-customer { margin: 0; color: var(--muted); font-size: .72rem; line-height: 1.65; overflow-wrap: anywhere; }
+.package-status { padding: .4rem .6rem; border: 1px solid var(--petrol); color: var(--petrol); font-size: .56rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.package-status.completed { background: var(--petrol); color: white; }
+.package-status.expired { border-color: var(--danger); color: var(--danger); }
+.package-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .7rem; margin: 1rem 0; }
+.package-metric { padding: .8rem; border: 1px solid var(--line); background: var(--paper); }
+.package-metric span { display: block; color: var(--muted); font-size: .56rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.package-metric strong { display: block; margin-top: .3rem; color: var(--petrol); font-family: var(--serif); font-size: 1.25rem; font-weight: 500; }
+.package-progress { height: 5px; overflow: hidden; background: rgba(11,59,60,.12); }
+.package-progress span { display: block; height: 100%; background: var(--gold); }
+.package-card details { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: .8rem; }
+.package-card details > summary { cursor: pointer; color: var(--petrol); font-size: .62rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.package-history { display: grid; gap: .5rem; margin: .9rem 0; }
+.package-session { display: grid; grid-template-columns: minmax(150px,.7fr) minmax(110px,.35fr) 1fr auto; align-items: center; gap: .7rem; padding: .7rem; border: 1px solid var(--line); background: var(--paper); color: var(--muted); font-size: .68rem; }
+.package-session strong { color: var(--petrol); font-weight: 500; }
+.package-session button { border: 0; border-bottom: 1px solid currentColor; background: transparent; color: var(--danger); font-size: .6rem; }
+.package-edit-form, .package-session-form { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); align-items: end; gap: .7rem; margin-top: 1rem; }
+.package-edit-form .wide, .package-session-form .wide { grid-column: 1 / -1; }
+.package-edit-form .button, .package-session-form .button { justify-self: start; }
+
 .faq-main { width: min(1040px, calc(100% - 2rem)); margin: 0 auto; padding: clamp(2rem, 6vw, 5.5rem) 0 6rem; }
 .faq-hero { padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid rgba(183,154,93,.42); background: var(--paper); box-shadow: 0 18px 60px rgba(12,48,47,.08); }
 .faq-hero h1 { max-width: 800px; }
@@ -223,6 +252,8 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .admin-option-grid.three-options { grid-template-columns: 1fr; }
   .three-options .admin-option-card { min-height: 215px; }
   .admin-slots { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .package-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .package-edit-form, .package-session-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 
 @media (max-width: 620px) {
@@ -252,6 +283,9 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .appointment-meta { grid-column: 1; }
   .appointment-admin-tools form { grid-template-columns: 1fr; }
   .appointment-admin-tools .button { grid-column: 1; justify-self: stretch; }
+  .packages-filter-fields, .package-metrics, .package-edit-form, .package-session-form { grid-template-columns: 1fr; }
+  .package-edit-form .wide, .package-session-form .wide { grid-column: 1; }
+  .package-session { grid-template-columns: 1fr; }
   .faq-main { width: min(100% - 1rem, 1040px); padding-top: 1rem; }
   .glossary-item { grid-template-columns: 1fr; gap: .55rem; }
 }

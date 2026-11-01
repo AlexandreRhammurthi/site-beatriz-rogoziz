@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=13" />
+    <link rel="stylesheet" href="admin.css?v=14" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
     <script src="admin-utils.js?v=4" defer></script>
-    <script src="admin.js?v=14" defer></script>
+    <script src="admin.js?v=15" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -102,7 +102,7 @@
             <h1 id="admin-home-title" tabindex="-1">O que você deseja administrar?</h1>
             <p>Escolha uma área para acessar somente as ferramentas que você precisa agora.</p>
           </div>
-          <div class="admin-option-grid">
+          <div class="admin-option-grid three-options">
             <button class="admin-option-card" type="button" data-admin-target="services">
               <span class="option-index" aria-hidden="true">01</span>
               <span class="option-copy">
@@ -111,8 +111,16 @@
               </span>
               <span class="option-arrow" aria-hidden="true">→</span>
             </button>
-            <button class="admin-option-card" type="button" data-admin-target="schedule-menu">
+            <button class="admin-option-card" type="button" data-admin-target="packages">
               <span class="option-index" aria-hidden="true">02</span>
+              <span class="option-copy">
+                <strong>Pacotes de clientes</strong>
+                <span>Cadastre pacotes, acompanhe sessões utilizadas, validade e próximos atendimentos.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="admin-option-card" type="button" data-admin-target="schedule-menu">
+              <span class="option-index" aria-hidden="true">03</span>
               <span class="option-copy">
                 <strong>Agenda</strong>
                 <span>Configure a disponibilidade do Studio B ou consulte os atendimentos marcados.</span>
@@ -125,6 +133,60 @@
             <a href="admin-faq-servicos.html">FAQ de Serviços e valores</a>
             <a href="admin-faq-agenda.html">FAQ da Agenda</a>
           </div>
+        </section>
+
+        <section class="admin-view" data-admin-view="packages" aria-labelledby="packages-title" hidden>
+          <div class="view-heading">
+            <button class="view-back" type="button" data-admin-target="home">← Voltar ao início</button>
+            <div>
+              <p class="eyebrow">Pacotes de clientes</p>
+              <h1 id="packages-title" tabindex="-1">Acompanhe cada jornada de cuidado.</h1>
+              <p>Cadastre contratos, registre sessões realizadas e acompanhe saldo, validade e próximos atendimentos.</p>
+            </div>
+          </div>
+
+          <section class="booking-settings-card" aria-labelledby="new-package-title">
+            <div class="settings-heading">
+              <div>
+                <p class="eyebrow">Novo contrato</p>
+                <h2 id="new-package-title">Cadastrar pacote</h2>
+                <p>Escolha uma opção do Menu de Cuidados ou informe os dados contratados manualmente.</p>
+              </div>
+            </div>
+            <form data-package-form>
+              <div class="fields-grid package-fields">
+                <label>Nome do cliente<input name="customer_name" autocomplete="name" maxlength="100" required /></label>
+                <label>WhatsApp<input name="customer_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999" required /></label>
+                <label>E-mail<input name="customer_email" type="email" autocomplete="email" required /></label>
+                <label>Serviço<select name="service_id" required><option value="">Selecione</option></select></label>
+                <label class="full">Opção do menu<select name="service_price_id"><option value="">Informar manualmente</option></select></label>
+                <label>Nome do pacote<input name="package_label" maxlength="160" placeholder="Ex.: Pacote com 5 sessões" required /></label>
+                <label>Quantidade contratada<input name="total_sessions" type="number" min="1" max="100" required /></label>
+                <label>Valor contratado <span class="optional">(opcional)</span><input name="price_amount" type="number" min="0" step="0.01" /></label>
+                <label>Data da compra<input name="purchased_on" type="date" required /></label>
+                <label>Validade <span class="optional">(opcional)</span><input name="expires_on" type="date" /></label>
+                <label class="full">Observações internas<textarea name="notes" maxlength="2000" placeholder="Condições combinadas ou informações importantes"></textarea></label>
+              </div>
+              <div class="settings-actions"><button class="button primary" type="submit">Cadastrar pacote</button></div>
+            </form>
+          </section>
+
+          <section class="booking-settings-card" aria-labelledby="packages-list-title">
+            <div class="settings-heading packages-heading">
+              <div>
+                <p class="eyebrow">Acompanhamento</p>
+                <h2 id="packages-list-title">Pacotes cadastrados</h2>
+              </div>
+            </div>
+            <form class="packages-filter" data-packages-filter>
+              <div class="fields-grid packages-filter-fields">
+                <label>Buscar cliente<input name="search" type="search" placeholder="Nome, e-mail ou WhatsApp" /></label>
+                <label>Situação<select name="status"><option value="all">Todas</option><option value="active">Ativos</option><option value="completed">Concluídos</option><option value="expired">Expirados</option></select></label>
+              </div>
+            </form>
+            <div class="packages-summary" data-packages-summary aria-live="polite"></div>
+            <div class="packages-list" data-packages-list aria-live="polite"></div>
+          </section>
         </section>
 
         <section class="admin-view admin-portal" data-admin-view="schedule-menu" aria-labelledby="schedule-menu-title" hidden>
@@ -252,6 +314,7 @@
                 <label>WhatsApp<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999" required /></label>
                 <label>E-mail<input name="email" type="email" autocomplete="email" required /></label>
                 <label>Serviço<select name="service_id" required><option value="">Selecione</option></select></label>
+                <label class="full">Usar pacote do cliente <span class="optional">(opcional)</span><select name="client_package_id"><option value="">Não vincular a pacote</option></select></label>
                 <label>Data<input name="date" type="date" required /></label>
               </div>
               <div class="prices-heading manual-slots-heading">

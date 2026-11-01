@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=11" />
+    <link rel="stylesheet" href="admin.css?v=14" />
   </head>
   <body>
     <header class="admin-header">
@@ -34,8 +34,29 @@
           <a href="#operacao">Como operar</a>
           <a href="#servicos">Glossário do serviço</a>
           <a href="#valores">Glossário de valores</a>
+          <a href="#pacotes-clientes">Pacotes de clientes</a>
           <a href="#duvidas">Dúvidas frequentes</a>
         </nav>
+      </section>
+
+      <section class="faq-section" id="pacotes-clientes" aria-labelledby="client-packages-title">
+        <div class="faq-section-heading">
+          <p class="eyebrow">Acompanhamento</p>
+          <h2 id="client-packages-title">Pacotes de clientes</h2>
+          <p>Esta área registra o contrato de cada cliente e acompanha o uso sem alterar as opções comerciais exibidas no Menu de Cuidados.</p>
+        </div>
+        <dl class="glossary-list">
+          <div class="glossary-item"><dt>Quantidade contratada</dt><dd>Total de sessões incluídas no pacote. O sistema impede reduzir esse número abaixo das sessões já realizadas ou agendadas.</dd></div>
+          <div class="glossary-item"><dt>Sessões utilizadas</dt><dd>Conta somente sessões marcadas como “Realizada”. Cancelamentos e faltas permanecem no histórico, mas não reduzem o saldo automaticamente.</dd></div>
+          <div class="glossary-item"><dt>Validade</dt><dd>Último dia permitido para utilizar ou agendar sessões do pacote. Deixe vazio quando o contrato não tiver prazo.</dd></div>
+          <div class="glossary-item"><dt>Situação</dt><dd><strong>Ativo:</strong> possui saldo e está no prazo. <strong>Concluído:</strong> todas as sessões foram utilizadas. <strong>Expirado:</strong> ainda possui saldo, mas a validade terminou.</dd></div>
+          <div class="glossary-item"><dt>Próxima sessão</dt><dd>É preenchida automaticamente quando um novo agendamento administrativo é vinculado ao pacote.</dd></div>
+          <div class="glossary-item"><dt>Histórico</dt><dd>Mostra sessões vindas da agenda e registros manuais anteriores. O comparecimento salvo na agenda atualiza o pacote automaticamente.</dd></div>
+        </dl>
+        <aside class="example-box">
+          <strong>Fluxo recomendado</strong>
+          <ol><li>Cadastre o pacote e confirme cliente, serviço, quantidade, compra e validade.</li><li>Ao criar um novo agendamento no painel, escolha o pacote do cliente.</li><li>Depois do atendimento, marque o comparecimento como “Concluído” na Agenda.</li><li>O saldo e o histórico do pacote serão atualizados automaticamente.</li></ol>
+        </aside>
       </section>
 
       <section class="faq-section" id="operacao" aria-labelledby="services-operation-title">

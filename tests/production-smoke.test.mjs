@@ -37,6 +37,7 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-admin-target="schedule-settings"/);
   assert.match(adminHtml, /data-admin-target="appointments"/);
   assert.match(adminHtml, /data-admin-target="create-appointment"/);
+  assert.match(adminHtml, /data-admin-target="packages"/);
   assert.match(adminHtml, /href="admin-faq-servicos\.html"/);
   assert.match(adminHtml, /href="admin-faq-agenda\.html"/);
   assert.match(adminHtml, /data-blocked-period-form/);
@@ -45,6 +46,8 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-manual-booking-form/);
   assert.match(adminHtml, /data-reset-request-form/);
   assert.match(adminHtml, /data-reset-password-form/);
+  assert.match(adminHtml, /data-package-form/);
+  assert.match(adminHtml, /data-packages-list/);
   assert.match(await manage.text(), /data-reschedule-form/);
   assert.match(await servicesFaq.text(), /FAQ de Serviços e valores/);
   assert.match(await scheduleFaq.text(), /Intervalo não é preparação/);
@@ -114,6 +117,15 @@ test("agendamentos não podem ser consultados anonimamente", { skip: !run }, asy
     headers: { apikey: key }
   });
   assert.ok([401, 403].includes(response.status), `status inesperado: ${response.status}`);
+});
+
+test("pacotes e sessões não podem ser consultados anonimamente", { skip: !run }, async () => {
+  for (const table of ["client_packages", "package_sessions"]) {
+    const response = await fetch(`${supabaseUrl}/rest/v1/${table}?select=id&limit=1`, {
+      headers: { apikey: key }
+    });
+    assert.ok([401, 403].includes(response.status), `${table}: status inesperado ${response.status}`);
+  }
 });
 
 test("executor de lembretes rejeita chamadas públicas", { skip: !run }, async () => {

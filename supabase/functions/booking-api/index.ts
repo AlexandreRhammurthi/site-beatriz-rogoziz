@@ -867,6 +867,40 @@ Deno.serve(async (request) => {
         }, 409);
       }
 
+      let clientPackageId: string | null = null;
+      if (isAdminCreate && payload.client_package_id) {
+        if (!isUuid(payload.client_package_id)) {
+          return json(origin, { error: "Pacote inválido." }, 400);
+        }
+        const { data: clientPackage, error: packageError } = await admin
+          .from("client_packages")
+          .select("id, service_id, total_sessions, expires_on")
+          .eq("id", payload.client_package_id)
+          .single();
+        if (packageError || !clientPackage) {
+          return json(origin, { error: "Pacote não encontrado." }, 404);
+        }
+        if (clientPackage.service_id !== payload.service_id) {
+          return json(origin, {
+            error: "O serviço escolhido não corresponde ao pacote.",
+          }, 400);
+        }
+        if (clientPackage.expires_on && localDate > clientPackage.expires_on) {
+          return json(origin, { error: "Este pacote está expirado." }, 409);
+        }
+        const { count: reservedSessions, error: sessionsError } = await admin
+          .from("package_sessions").select("id", { count: "exact", head: true })
+          .eq("package_id", clientPackage.id)
+          .in("attendance_status", ["scheduled", "completed"]);
+        if (sessionsError) throw sessionsError;
+        if ((reservedSessions || 0) >= clientPackage.total_sessions) {
+          return json(origin, {
+            error: "Este pacote não possui sessões restantes.",
+          }, 409);
+        }
+        clientPackageId = clientPackage.id;
+      }
+
       if (!isAdminCreate) {
         const recentThreshold = new Date(Date.now() - 30 * 60000).toISOString();
         const [{ count: recentEmailCount }, { count: recentPhoneCount }] =
@@ -898,6 +932,7 @@ Deno.serve(async (request) => {
         ends_at: selected.end,
         calendar_sync_requested: payload.sync_calendar === true,
         booking_source: isAdminCreate ? "admin" : "online",
+        client_package_id: clientPackageId,
         manage_token_hash: tokenHash,
         status: "pending",
       };
