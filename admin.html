@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=11" />
+    <link rel="stylesheet" href="admin.css?v=12" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
     <script src="admin-utils.js?v=4" defer></script>
-    <script src="admin.js?v=12" defer></script>
+    <script src="admin.js?v=13" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -100,7 +100,7 @@
             <p>Escolha entre configurar a disponibilidade do Studio B ou acompanhar os agendamentos dos clientes.</p>
             <a class="faq-link" href="admin-faq-agenda.html">Consultar glossário e FAQ da Agenda <span aria-hidden="true">→</span></a>
           </div>
-          <div class="admin-option-grid">
+          <div class="admin-option-grid three-options">
             <button class="admin-option-card" type="button" data-admin-target="schedule-settings">
               <span class="option-index" aria-hidden="true">01</span>
               <span class="option-copy">
@@ -109,8 +109,16 @@
               </span>
               <span class="option-arrow" aria-hidden="true">→</span>
             </button>
-            <button class="admin-option-card" type="button" data-admin-target="appointments">
+            <button class="admin-option-card" type="button" data-admin-target="create-appointment">
               <span class="option-index" aria-hidden="true">02</span>
+              <span class="option-copy">
+                <strong>Novo agendamento</strong>
+                <span>Registre atendimentos recebidos pelo WhatsApp, telefone ou diretamente no Studio B.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="admin-option-card" type="button" data-admin-target="appointments">
+              <span class="option-index" aria-hidden="true">03</span>
               <span class="option-copy">
                 <strong>Ver agendamentos marcados</strong>
                 <span>Consulte clientes, próximos atendimentos, histórico e informações de acompanhamento.</span>
@@ -182,6 +190,55 @@
             <div class="settings-actions"><button class="button primary" type="submit">Adicionar bloqueio</button></div>
           </form>
           <div class="blocked-periods" data-blocked-periods-list aria-live="polite"></div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-admin-view="create-appointment" aria-labelledby="manual-booking-title" hidden>
+          <div class="view-heading">
+            <button class="view-back" type="button" data-admin-target="schedule-menu">← Voltar para Agenda</button>
+            <div>
+              <p class="eyebrow">Agenda</p>
+              <h1 id="manual-booking-title" tabindex="-1">Novo agendamento</h1>
+              <p>Cadastre um atendimento recebido fora do site usando a mesma disponibilidade da agenda online.</p>
+            </div>
+          </div>
+
+          <section class="booking-settings-card manual-booking-card" aria-labelledby="manual-booking-form-title">
+            <div class="settings-heading">
+              <div>
+                <p class="eyebrow">Lançamento administrativo</p>
+                <h2 id="manual-booking-form-title">Dados do atendimento</h2>
+                <p>O horário será validado novamente antes da confirmação e o evento será criado no Google Agenda.</p>
+              </div>
+            </div>
+            <form data-manual-booking-form>
+              <div class="fields-grid manual-booking-fields">
+                <label>Nome completo<input name="name" autocomplete="name" maxlength="100" required /></label>
+                <label>WhatsApp<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999" required /></label>
+                <label>E-mail<input name="email" type="email" autocomplete="email" required /></label>
+                <label>Serviço<select name="service_id" required><option value="">Selecione</option></select></label>
+                <label>Data<input name="date" type="date" required /></label>
+              </div>
+              <div class="prices-heading manual-slots-heading">
+                <h3>Horários disponíveis</h3>
+                <span>Selecione uma opção</span>
+              </div>
+              <div class="admin-slots" data-manual-slots aria-live="polite"><p class="appointments-empty">Escolha o serviço e a data para consultar os horários.</p></div>
+              <input name="starts_at" type="hidden" required />
+              <div class="manual-booking-options">
+                <label class="check"><input name="sync_calendar" type="checkbox" /> O cliente autorizou receber um convite na agenda</label>
+                <label class="check"><input name="send_email" type="checkbox" checked /> Enviar confirmação e link de gerenciamento por e-mail</label>
+              </div>
+              <div class="manual-booking-summary" data-manual-summary hidden></div>
+              <div class="settings-actions"><button class="button primary" type="submit">Confirmar agendamento</button></div>
+            </form>
+            <div class="manual-booking-success" data-manual-success hidden>
+              <p class="eyebrow">Agendamento confirmado</p>
+              <h2>Horário registrado com sucesso.</h2>
+              <p data-manual-success-copy></p>
+              <a class="button secondary button-link" data-manual-manage-link href="manage-booking.html" target="_blank" rel="noopener noreferrer">Abrir link do cliente</a>
+              <button class="text-action" type="button" data-new-manual-booking>Cadastrar outro agendamento</button>
+            </div>
           </section>
         </section>
 

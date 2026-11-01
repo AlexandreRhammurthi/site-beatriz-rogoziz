@@ -207,7 +207,7 @@ const loadBookingConfig = async () => {
   }
 };
 
-loadBookingConfig().catch((error) => console.warn("Agendamento online indisponível; mantendo o WhatsApp.", error));
+loadBookingConfig().catch((error) => console.warn("Agendamento online indisponível.", error));
 
 const header = document.querySelector("[data-header]");
 const fab = document.querySelector("[data-fab]");
@@ -257,14 +257,24 @@ document.addEventListener("click", (event) => {
   const trigger = event.target.closest("[data-booking]");
   if (!trigger) return;
 
+  event.preventDefault();
   if (onlineBookingEnabled) {
-    event.preventDefault();
     const serviceIndex = trigger.getAttribute("data-service-index");
     const service = serviceIndex !== null && services[serviceIndex] ? services[serviceIndex] : null;
     const query = service?.id ? `?service=${encodeURIComponent(service.id)}` : "";
     window.location.href = `booking.html${query}`;
     return;
   }
+
+  document.querySelector("#agendamento")?.scrollIntoView({ behavior: "smooth" });
+  if (feedback) feedback.textContent = "O agendamento online está temporariamente indisponível. Você ainda pode falar com o Studio B pelo WhatsApp.";
+  closeMenu();
+});
+
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-whatsapp]");
+  if (!trigger) return;
+  event.preventDefault();
 
   const number = String(studio.whatsappNumber || "").replace(/\D/g, "");
   if (!number) {
@@ -273,8 +283,6 @@ document.addEventListener("click", (event) => {
     closeMenu();
     return;
   }
-
-  if (trigger.tagName === "A") event.preventDefault();
 
   const serviceIndex = trigger.getAttribute("data-service-index");
   const service = serviceIndex !== null && services[serviceIndex] ? services[serviceIndex] : null;

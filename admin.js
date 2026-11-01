@@ -15,6 +15,10 @@ const blockedPeriodForm = document.querySelector("[data-blocked-period-form]");
 const appointmentsList = document.querySelector("[data-appointments-list]");
 const appointmentsSummary = document.querySelector("[data-appointments-summary]");
 const appointmentsFilter = document.querySelector("[data-appointments-filter]");
+const manualBookingForm = document.querySelector("[data-manual-booking-form]");
+const manualBookingSlots = document.querySelector("[data-manual-slots]");
+const manualBookingSummary = document.querySelector("[data-manual-summary]");
+const manualBookingSuccess = document.querySelector("[data-manual-success]");
 const adminUtils = window.STUDIO_B_ADMIN_UTILS;
 const weekdayLabels = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 
@@ -27,6 +31,7 @@ const escapeHTML = (value = "") => String(value)
 
 let statusTimer;
 let appointmentsCache = [];
+let manualBookingConfig = null;
 let currentAdminView = "home";
 const loadedAdminViews = new Set();
 const callbackUrl = () => `${window.location.origin}${window.location.pathname}`;
@@ -67,6 +72,26 @@ const checkAdmin = async () => {
   const { data, error } = await client.rpc("is_admin");
   if (error) throw error;
   return data === true;
+};
+
+const callBookingApi = async (action, data = {}, authenticated = false) => {
+  const headers = {
+    "Content-Type": "application/json",
+    apikey: window.STUDIO_B_SUPABASE.publishableKey
+  };
+  if (authenticated) {
+    const { data: sessionData, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !sessionData.session?.access_token) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
+    headers.Authorization = `Bearer ${sessionData.session.access_token}`;
+  }
+  const response = await fetch(window.STUDIO_B_SUPABASE.bookingApiUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ action, ...data })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "Não foi possível consultar a agenda.");
+  return payload;
 };
 
 const addPriceRow = (container, price = {}) => {
@@ -215,11 +240,13 @@ const appointmentMarkup = (appointment) => {
   const serviceName = appointment.services?.name || "Serviço removido";
   const phone = adminUtils.formatPhone(appointment.customer_phone);
   const syncLabel = appointment.calendar_sync_requested ? "Convite de agenda solicitado" : "Sem convite de agenda";
+  const sourceLabel = appointment.booking_source === "admin" ? "Lançamento administrativo" : "Agendamento online";
   return `
     <article class="appointment-card ${escapeHTML(appointment.status)}">
       <div>
         <p class="appointment-date">${escapeHTML(adminUtils.formatAppointmentDate(appointment.starts_at, appointment.ends_at))}</p>
         <h3>${escapeHTML(serviceName)}</h3>
+        <span class="appointment-source">${escapeHTML(sourceLabel)}</span>
       </div>
       <div class="appointment-customer">
         <strong>${escapeHTML(appointment.customer_name)}</strong>
@@ -276,7 +303,7 @@ const loadAppointments = async () => {
   const end = adminUtils.zonedTimeToUtc(adminUtils.addDays(endDate, 1), "00:00:00");
   let query = client
     .from("appointments")
-    .select("id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, attendance_status, admin_notes, calendar_sync_requested, services(name)")
+    .select("id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, attendance_status, admin_notes, calendar_sync_requested, booking_source, services(name)")
     .gte("starts_at", start.toISOString())
     .lt("starts_at", end.toISOString())
     .order("starts_at")
@@ -289,10 +316,138 @@ const loadAppointments = async () => {
   renderAppointments();
 };
 
+const manualBookingDateValue = () => {
+  const today = adminUtils.partsInZone(new Date(), manualBookingConfig?.timezone || adminUtils.TIMEZONE);
+  return `${today.year}-${today.month}-${today.day}`;
+};
+
+const resetManualBookingForm = () => {
+  if (!manualBookingForm || !manualBookingConfig) return;
+  manualBookingForm.reset();
+  manualBookingForm.elements.send_email.checked = true;
+  manualBookingForm.elements.starts_at.value = "";
+  manualBookingForm.elements.date.min = manualBookingDateValue();
+  manualBookingForm.elements.date.max = adminUtils.addDays(manualBookingDateValue(), manualBookingConfig.booking_horizon_days);
+  manualBookingSlots.innerHTML = '<p class="appointments-empty">Escolha o serviço e a data para consultar os horários.</p>';
+  manualBookingSummary.hidden = true;
+  manualBookingSummary.innerHTML = "";
+};
+
+const loadManualBookingForm = async () => {
+  if (!manualBookingForm || !adminUtils) return;
+  manualBookingConfig = await callBookingApi("admin-config", {}, true);
+  if (!manualBookingConfig.enabled) throw new Error("A integração com Google Agenda ainda não está disponível.");
+  const select = manualBookingForm.elements.service_id;
+  select.innerHTML = '<option value="">Selecione</option>' + manualBookingConfig.services
+    .map((service) => `<option value="${escapeHTML(service.id)}">${escapeHTML(service.name)} — ${Number(service.duration_minutes)} min</option>`)
+    .join("");
+  manualBookingSuccess.hidden = true;
+  manualBookingForm.hidden = false;
+  resetManualBookingForm();
+};
+
+const loadManualBookingSlots = async () => {
+  const serviceId = manualBookingForm?.elements.service_id.value;
+  const date = manualBookingForm?.elements.date.value;
+  manualBookingForm.elements.starts_at.value = "";
+  manualBookingSummary.hidden = true;
+  if (!serviceId || !date) {
+    manualBookingSlots.innerHTML = '<p class="appointments-empty">Escolha o serviço e a data para consultar os horários.</p>';
+    return;
+  }
+  manualBookingSlots.innerHTML = '<p class="appointments-empty">Consultando horários…</p>';
+  try {
+    const result = await callBookingApi("admin-availability", { service_id: serviceId, date }, true);
+    manualBookingSlots.innerHTML = result.slots.length
+      ? result.slots.map((slot) => `<button class="admin-slot" type="button" data-manual-start="${escapeHTML(slot.start)}" data-manual-label="${escapeHTML(slot.label)}">${escapeHTML(slot.label)}</button>`).join("")
+      : '<p class="appointments-empty">Não há horários disponíveis nesta data.</p>';
+  } catch (error) {
+    manualBookingSlots.innerHTML = '<p class="appointments-empty">Não foi possível consultar esta data.</p>';
+    showStatus(error.message, true);
+  }
+};
+
+const updateManualBookingSummary = (slot) => {
+  const service = manualBookingConfig?.services.find((item) => item.id === manualBookingForm.elements.service_id.value);
+  if (!service || !slot) return;
+  const start = new Date(slot.dataset.manualStart);
+  const label = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: manualBookingConfig.timezone,
+    dateStyle: "full",
+    timeStyle: "short"
+  }).format(start);
+  manualBookingSummary.innerHTML = `<strong>${escapeHTML(service.name)}</strong><br>${escapeHTML(label)}<br>${Number(service.duration_minutes)} minutos`;
+  manualBookingSummary.hidden = false;
+};
+
+manualBookingForm?.elements.service_id.addEventListener("change", loadManualBookingSlots);
+manualBookingForm?.elements.date.addEventListener("change", loadManualBookingSlots);
+
+manualBookingSlots?.addEventListener("click", (event) => {
+  const slot = event.target.closest("[data-manual-start]");
+  if (!slot) return;
+  manualBookingSlots.querySelectorAll("[data-manual-start]").forEach((button) => {
+    button.classList.toggle("selected", button === slot);
+    button.setAttribute("aria-pressed", String(button === slot));
+  });
+  manualBookingForm.elements.starts_at.value = slot.dataset.manualStart;
+  updateManualBookingSummary(slot);
+});
+
+manualBookingForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  const values = new FormData(manualBookingForm);
+  const startsAt = String(values.get("starts_at") || "");
+  if (!startsAt) return showStatus("Selecione um dos horários disponíveis.", true);
+
+  setBusy(button, true);
+  try {
+    const result = await callBookingApi("admin-create", {
+      name: String(values.get("name") || "").trim(),
+      phone: String(values.get("phone") || "").trim(),
+      email: String(values.get("email") || "").trim(),
+      service_id: String(values.get("service_id") || ""),
+      starts_at: startsAt,
+      sync_calendar: values.get("sync_calendar") === "on",
+      send_email: values.get("send_email") === "on"
+    }, true);
+
+    const successCopy = manualBookingSuccess.querySelector("[data-manual-success-copy]");
+    const manageLink = manualBookingSuccess.querySelector("[data-manual-manage-link]");
+    if (result.email_delivered === true) {
+      successCopy.textContent = "A confirmação e o link de gerenciamento foram enviados ao cliente por e-mail.";
+    } else if (result.email_delivered === false) {
+      successCopy.textContent = "O horário foi registrado, mas o e-mail não pôde ser enviado. Compartilhe o link de gerenciamento com o cliente.";
+    } else {
+      successCopy.textContent = "O horário foi registrado sem envio de e-mail. Compartilhe o link de gerenciamento com o cliente, se necessário.";
+    }
+    manageLink.href = result.manage_url;
+    manualBookingForm.hidden = true;
+    manualBookingSuccess.hidden = false;
+    loadedAdminViews.delete("appointments");
+    appointmentsCache = [];
+    showStatus("Agendamento registrado com sucesso.");
+  } catch (error) {
+    showStatus(error.message || "Não foi possível registrar o agendamento.", true);
+    if (/horário/i.test(error.message || "")) await loadManualBookingSlots();
+  } finally {
+    setBusy(button, false);
+  }
+});
+
+document.querySelector("[data-new-manual-booking]")?.addEventListener("click", () => {
+  manualBookingSuccess.hidden = true;
+  manualBookingForm.hidden = false;
+  resetManualBookingForm();
+  manualBookingForm.elements.name.focus();
+});
+
 const loadAdminView = async (view) => {
   if (loadedAdminViews.has(view)) return;
   if (view === "services") await loadServices();
   if (view === "schedule-settings") await Promise.all([loadBookingSettings(), loadBlockedPeriods()]);
+  if (view === "create-appointment") await loadManualBookingForm();
   if (view === "appointments") await loadAppointments();
   loadedAdminViews.add(view);
 };
@@ -406,6 +561,7 @@ logoutButton?.addEventListener("click", async () => {
   await client.auth.signOut();
   loadedAdminViews.clear();
   appointmentsCache = [];
+  manualBookingConfig = null;
   currentAdminView = "home";
   setView("auth");
 });
@@ -576,13 +732,14 @@ appointmentsList?.addEventListener("submit", async (event) => {
 
 document.querySelector("[data-export-appointments]")?.addEventListener("click", () => {
   if (!appointmentsCache.length) return showStatus("Não há agendamentos carregados para exportar.", true);
-  const header = ["Data e horário", "Serviço", "Cliente", "E-mail", "WhatsApp", "Status", "Comparecimento", "Convite de agenda", "Observações privadas"];
+  const header = ["Data e horário", "Serviço", "Cliente", "E-mail", "WhatsApp", "Origem", "Status", "Comparecimento", "Convite de agenda", "Observações privadas"];
   const rows = appointmentsCache.map((appointment) => [
     adminUtils.formatAppointmentDate(appointment.starts_at, appointment.ends_at),
     appointment.services?.name || "Serviço removido",
     appointment.customer_name,
     appointment.customer_email,
     adminUtils.formatPhone(appointment.customer_phone),
+    appointment.booking_source === "admin" ? "Lançamento administrativo" : "Agendamento online",
     adminUtils.appointmentStatusLabel(appointment.status),
     adminUtils.attendanceStatusLabel(appointment.attendance_status),
     appointment.calendar_sync_requested ? "Sim" : "Não",

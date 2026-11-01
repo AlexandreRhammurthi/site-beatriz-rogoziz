@@ -31,6 +31,21 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+const isAdminRequest = async (request: Request) => {
+  const authorization = request.headers.get("Authorization") || "";
+  if (!authorization.startsWith("Bearer ")) return false;
+  const token = authorization.slice(7).trim();
+  if (!token) return false;
+  const { data: userData, error: userError } = await admin.auth.getUser(token);
+  if (userError || !userData.user) return false;
+  const { data: membership, error: membershipError } = await admin
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+  return !membershipError && Boolean(membership);
+};
+
 const corsHeaders = (origin: string | null) => ({
   "Access-Control-Allow-Origin": origin && ALLOWED_ORIGINS.has(origin)
     ? origin
@@ -621,11 +636,15 @@ Deno.serve(async (request) => {
   try {
     const payload = await request.json();
     const action = String(payload.action || "");
+    const adminAction = action.startsWith("admin-");
+    if (adminAction && !(await isAdminRequest(request))) {
+      return json(origin, { error: "Acesso administrativo necessário." }, 401);
+    }
     const settings = await getSettings();
     const effectiveEnabled = settings.booking_enabled &&
       integrationsConfigured();
 
-    if (action === "config") {
+    if (action === "config" || action === "admin-config") {
       const { data: services, error } = await admin
         .from("services")
         .select("id, name, subtitle, duration_minutes, sort_order")
@@ -633,20 +652,20 @@ Deno.serve(async (request) => {
         .order("sort_order");
       if (error) throw error;
       return json(origin, {
-        enabled: effectiveEnabled,
+        enabled: adminAction ? integrationsConfigured() : effectiveEnabled,
         timezone: settings.timezone,
         booking_horizon_days: settings.booking_horizon_days,
         services: services || [],
       });
     }
 
-    if (!effectiveEnabled) {
+    if (adminAction ? !integrationsConfigured() : !effectiveEnabled) {
       return json(origin, {
         error: "O agendamento online ainda está em configuração.",
       }, 503);
     }
 
-    if (action === "availability") {
+    if (action === "availability" || action === "admin-availability") {
       if (!isUuid(payload.service_id) || !isDate(payload.date)) {
         return json(origin, { error: "Serviço ou data inválidos." }, 400);
       }
@@ -661,7 +680,8 @@ Deno.serve(async (request) => {
       return json(origin, result);
     }
 
-    if (action === "create") {
+    if (action === "create" || action === "admin-create") {
+      const isAdminCreate = action === "admin-create";
       const name = String(payload.name || "").trim().replace(/\s+/g, " ");
       const email = normalizeEmail(payload.email);
       const phone = normalizePhone(payload.phone);
@@ -698,22 +718,24 @@ Deno.serve(async (request) => {
         }, 409);
       }
 
-      const recentThreshold = new Date(Date.now() - 30 * 60000).toISOString();
-      const [{ count: recentEmailCount }, { count: recentPhoneCount }] =
-        await Promise.all([
-          admin.from("appointments").select("id", {
-            count: "exact",
-            head: true,
-          }).eq("customer_email", email).gte("created_at", recentThreshold),
-          admin.from("appointments").select("id", {
-            count: "exact",
-            head: true,
-          }).eq("customer_phone", phone).gte("created_at", recentThreshold),
-        ]);
-      if ((recentEmailCount || 0) >= 3 || (recentPhoneCount || 0) >= 3) {
-        return json(origin, {
-          error: "Muitas tentativas de agendamento. Aguarde alguns minutos.",
-        }, 429);
+      if (!isAdminCreate) {
+        const recentThreshold = new Date(Date.now() - 30 * 60000).toISOString();
+        const [{ count: recentEmailCount }, { count: recentPhoneCount }] =
+          await Promise.all([
+            admin.from("appointments").select("id", {
+              count: "exact",
+              head: true,
+            }).eq("customer_email", email).gte("created_at", recentThreshold),
+            admin.from("appointments").select("id", {
+              count: "exact",
+              head: true,
+            }).eq("customer_phone", phone).gte("created_at", recentThreshold),
+          ]);
+        if ((recentEmailCount || 0) >= 3 || (recentPhoneCount || 0) >= 3) {
+          return json(origin, {
+            error: "Muitas tentativas de agendamento. Aguarde alguns minutos.",
+          }, 429);
+        }
       }
 
       const token = randomToken();
@@ -726,6 +748,7 @@ Deno.serve(async (request) => {
         starts_at: selected.start,
         ends_at: selected.end,
         calendar_sync_requested: payload.sync_calendar === true,
+        booking_source: isAdminCreate ? "admin" : "online",
         manage_token_hash: tokenHash,
         status: "pending",
       };
@@ -760,23 +783,26 @@ Deno.serve(async (request) => {
         throw error;
       }
 
-      let emailDelivered = true;
-      try {
-        await sendEmail(
-          email,
-          "Agendamento confirmado — Studio B",
-          confirmationEmail(
-            name,
-            availability.service.name,
-            startsAt,
-            settings.timezone,
-            manageUrl,
-            payload.sync_calendar === true,
-          ),
-        );
-      } catch (error) {
-        console.error("Confirmation email failed", error);
-        emailDelivered = false;
+      const sendConfirmation = !isAdminCreate || payload.send_email !== false;
+      let emailDelivered: boolean | null = sendConfirmation ? true : null;
+      if (sendConfirmation) {
+        try {
+          await sendEmail(
+            email,
+            "Agendamento confirmado — Studio B",
+            confirmationEmail(
+              name,
+              availability.service.name,
+              startsAt,
+              settings.timezone,
+              manageUrl,
+              payload.sync_calendar === true,
+            ),
+          );
+        } catch (error) {
+          console.error("Confirmation email failed", error);
+          emailDelivered = false;
+        }
       }
       return json(origin, {
         success: true,

@@ -149,6 +149,9 @@ h2 { font-size: clamp(2.8rem, 5.5vw, 5.5rem); }
 .booking-inner { position: relative; z-index: 2; max-width: 860px; }
 .booking-inner h2 { font-size: clamp(3.2rem, 6.5vw, 6.2rem); }
 .booking-inner > p:not(.eyebrow):not(.booking-feedback) { max-width: 580px; margin: 1.4rem auto 1.8rem; color: rgba(255,255,255,.75); line-height: 1.8; }
+.booking-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+.booking-actions .button-quiet { border-color: rgba(183,154,93,.75); color: var(--cream); }
+.booking-actions .button-quiet:hover { border-color: white; }
 .booking-mark { position: absolute; color: rgba(216,194,143,.06); font-family: var(--serif); font-size: min(65vw, 720px); line-height: .7; }
 .booking-feedback { min-height: 1.5em; margin: 1rem 0 0; color: var(--gold-light); font-size: .75rem; }
 
