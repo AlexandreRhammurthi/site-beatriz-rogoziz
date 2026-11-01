@@ -11,14 +11,18 @@ const supabaseUrl = configSource.match(/url:\s*"([^"]+)"/)?.[1];
 
 test("site publicado expõe o contrato atualizado", { skip: !run }, async () => {
   const stamp = Date.now();
-  const [booking, admin, manage] = await Promise.all([
+  const [booking, admin, manage, servicesFaq, scheduleFaq] = await Promise.all([
     fetch(`${baseUrl}/booking.html?v=${stamp}`),
     fetch(`${baseUrl}/admin.html?v=${stamp}`),
-    fetch(`${baseUrl}/manage-booking.html?v=${stamp}`)
+    fetch(`${baseUrl}/manage-booking.html?v=${stamp}`),
+    fetch(`${baseUrl}/admin-faq-servicos.html?v=${stamp}`),
+    fetch(`${baseUrl}/admin-faq-agenda.html?v=${stamp}`)
   ]);
   assert.equal(booking.status, 200);
   assert.equal(admin.status, 200);
   assert.equal(manage.status, 200);
+  assert.equal(servicesFaq.status, 200);
+  assert.equal(scheduleFaq.status, 200);
   assert.match(await booking.text(), /href="privacy\.html"/);
   const adminHtml = await admin.text();
   assert.match(adminHtml, /data-admin-view="home"/);
@@ -26,10 +30,14 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-admin-target="services"/);
   assert.match(adminHtml, /data-admin-target="schedule-settings"/);
   assert.match(adminHtml, /data-admin-target="appointments"/);
+  assert.match(adminHtml, /href="admin-faq-servicos\.html"/);
+  assert.match(adminHtml, /href="admin-faq-agenda\.html"/);
   assert.match(adminHtml, /data-blocked-period-form/);
   assert.match(adminHtml, /data-appointments-filter/);
   assert.match(adminHtml, /data-appointments-list/);
   assert.match(await manage.text(), /data-reschedule-form/);
+  assert.match(await servicesFaq.text(), /FAQ de Serviços e valores/);
+  assert.match(await scheduleFaq.text(), /Intervalo não é preparação/);
 });
 
 test("API pública de agendamento permanece operacional", { skip: !run }, async () => {

@@ -71,6 +71,14 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .view-heading { margin-bottom: 2rem; }
 .view-heading > div > p:last-child { margin-bottom: 0; }
 .services-view-heading .dashboard-heading { margin-bottom: 0; }
+.portal-help { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem 1.2rem; margin-top: 1.5rem; padding-top: 1.2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .68rem; }
+.portal-help span { font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.portal-help a, .faq-link { color: var(--petrol); font-weight: 600; text-decoration-color: rgba(183,154,93,.75); text-underline-offset: .25rem; }
+.portal-help a:hover, .portal-help a:focus-visible, .faq-link:hover, .faq-link:focus-visible { color: var(--gold); }
+.faq-link { display: inline-flex; align-items: center; gap: .6rem; margin-top: .65rem; font-size: .72rem; }
+.faq-link span { font-size: 1rem; }
+.heading-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .7rem; }
+.button-link { display: inline-grid; place-items: center; text-decoration: none; }
 
 .dashboard-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 2rem; }
 .dashboard-heading p:last-child { margin-bottom: 0; }
@@ -145,6 +153,41 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .appointment-admin-tools select { width: 100%; border: 1px solid var(--line); background: white; color: var(--ink); padding: .8rem; }
 .appointment-admin-tools textarea { min-height: 74px; }
 
+.faq-main { width: min(1040px, calc(100% - 2rem)); margin: 0 auto; padding: clamp(2rem, 6vw, 5.5rem) 0 6rem; }
+.faq-hero { padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid rgba(183,154,93,.42); background: var(--paper); box-shadow: 0 18px 60px rgba(12,48,47,.08); }
+.faq-hero h1 { max-width: 800px; }
+.faq-hero > p:last-of-type { max-width: 760px; color: var(--muted); line-height: 1.75; }
+.faq-return { display: inline-block; margin-bottom: 1.8rem; color: var(--petrol); font-size: .65rem; font-weight: 600; letter-spacing: .09em; text-decoration-color: var(--gold); text-transform: uppercase; text-underline-offset: .25rem; }
+.faq-toc { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.5rem; }
+.faq-toc a { padding: .6rem .8rem; border: 1px solid var(--line); color: var(--petrol); font-size: .62rem; font-weight: 600; letter-spacing: .07em; text-decoration: none; text-transform: uppercase; }
+.faq-toc a:hover, .faq-toc a:focus-visible { border-color: var(--gold); background: rgba(183,154,93,.09); }
+.faq-section { margin-top: 2rem; padding: clamp(1.25rem, 3vw, 2.2rem); border: 1px solid rgba(183,154,93,.35); background: var(--paper); box-shadow: 0 12px 36px rgba(12,48,47,.05); scroll-margin-top: 100px; }
+.faq-section-heading { max-width: 740px; margin-bottom: 1.5rem; }
+.faq-section-heading h2 { font-size: clamp(2rem, 4vw, 3.2rem); }
+.faq-section-heading p { color: var(--muted); line-height: 1.7; }
+.glossary-list { display: grid; gap: 0; margin: 0; }
+.glossary-item { display: grid; grid-template-columns: minmax(180px, .35fr) 1fr; gap: 1.4rem; padding: 1.15rem 0; border-top: 1px solid var(--line); }
+.glossary-item:first-child { border-top-color: var(--gold); }
+.glossary-item dt { font-family: var(--serif); font-size: 1.35rem; line-height: 1.1; }
+.glossary-item dd { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.75; }
+.glossary-item dd strong { color: var(--ink); }
+.example-box { margin: 1.5rem 0 0; padding: 1.2rem 1.35rem; border-left: 3px solid var(--gold); background: #f4efe4; }
+.example-box strong { display: block; margin-bottom: .35rem; color: var(--petrol); font-size: .67rem; letter-spacing: .09em; text-transform: uppercase; }
+.example-box p, .example-box li { color: var(--muted); font-size: .76rem; line-height: 1.7; }
+.example-box p { margin: 0; }
+.example-box ul, .example-box ol { margin: .5rem 0 0; padding-left: 1.2rem; }
+.faq-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; margin-top: 1rem; }
+.faq-step { padding: 1.1rem; border: 1px solid var(--line); background: #f4efe4; }
+.faq-step span { display: block; margin-bottom: .6rem; color: var(--gold); font-size: .6rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.faq-step h3 { margin: 0 0 .45rem; font-family: var(--serif); font-size: 1.4rem; font-weight: 500; }
+.faq-step p { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.7; }
+.faq-question { border-top: 1px solid var(--line); }
+.faq-question:last-child { border-bottom: 1px solid var(--line); }
+.faq-question summary { padding: 1rem 0; cursor: pointer; color: var(--petrol); font-family: var(--serif); font-size: 1.3rem; list-style-position: inside; }
+.faq-question > div { padding: 0 0 1.2rem 1.2rem; color: var(--muted); font-size: .77rem; line-height: 1.75; }
+.faq-question p { margin: .4rem 0; }
+.faq-warning { color: var(--danger); font-weight: 600; }
+
 @media (max-width: 900px) {
   .price-row { grid-template-columns: repeat(2, 1fr); }
   .price-row .wide { grid-column: 1 / -1; }
@@ -156,6 +199,7 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .appointment-meta { grid-column: 1 / -1; }
   .appointment-admin-tools form { grid-template-columns: 1fr 1fr; }
   .appointment-admin-tools .button { grid-column: 1 / -1; justify-self: end; }
+  .faq-steps { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 620px) {
@@ -170,6 +214,8 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .option-copy > span { font-size: .74rem; }
   .option-arrow { width: 34px; height: 34px; }
   .dashboard-heading { align-items: stretch; flex-direction: column; }
+  .heading-actions { justify-content: stretch; }
+  .heading-actions .button { flex: 1 1 100%; }
   .fields-grid, .price-row { grid-template-columns: 1fr; }
   .fields-grid .full, .price-row .wide { grid-column: 1; }
   .service-editor summary, .service-editor-form { padding-left: 1rem; padding-right: 1rem; }
@@ -181,4 +227,6 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .appointment-meta { grid-column: 1; }
   .appointment-admin-tools form { grid-template-columns: 1fr; }
   .appointment-admin-tools .button { grid-column: 1; justify-self: stretch; }
+  .faq-main { width: min(100% - 1rem, 1040px); padding-top: 1rem; }
+  .glossary-item { grid-template-columns: 1fr; gap: .55rem; }
 }

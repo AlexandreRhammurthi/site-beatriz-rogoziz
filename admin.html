@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=10" />
+    <link rel="stylesheet" href="admin.css?v=11" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
     <script src="admin-utils.js?v=4" defer></script>
@@ -85,6 +85,11 @@
               <span class="option-arrow" aria-hidden="true">→</span>
             </button>
           </div>
+          <div class="portal-help" aria-label="Ajuda do painel">
+            <span>Precisa de ajuda?</span>
+            <a href="admin-faq-servicos.html">FAQ de Serviços e valores</a>
+            <a href="admin-faq-agenda.html">FAQ da Agenda</a>
+          </div>
         </section>
 
         <section class="admin-view admin-portal" data-admin-view="schedule-menu" aria-labelledby="schedule-menu-title" hidden>
@@ -93,6 +98,7 @@
             <p class="eyebrow">Agenda</p>
             <h1 id="schedule-menu-title" tabindex="-1">Como você deseja administrar a agenda?</h1>
             <p>Escolha entre configurar a disponibilidade do Studio B ou acompanhar os agendamentos dos clientes.</p>
+            <a class="faq-link" href="admin-faq-agenda.html">Consultar glossário e FAQ da Agenda <span aria-hidden="true">→</span></a>
           </div>
           <div class="admin-option-grid">
             <button class="admin-option-card" type="button" data-admin-target="schedule-settings">
@@ -220,7 +226,10 @@
                 <h1 id="services-title" tabindex="-1">Serviços e valores</h1>
                 <p>As alterações salvas aqui aparecem automaticamente no site.</p>
               </div>
-              <button class="button primary" type="button" data-add-service>Adicionar serviço</button>
+              <div class="heading-actions">
+                <a class="button secondary button-link" href="admin-faq-servicos.html">Abrir FAQ</a>
+                <button class="button primary" type="button" data-add-service>Adicionar serviço</button>
+              </div>
             </div>
           </div>
           <div class="services-list" data-services-list></div>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#082f30" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>FAQ da Agenda | Studio B</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="admin.css?v=11" />
+  </head>
+  <body>
+    <header class="admin-header">
+      <a class="admin-brand" href="index.html" aria-label="Voltar ao site">
+        <span>BEATRIZ</span>
+        <small>STUDIO B</small>
+      </a>
+      <div class="header-actions">
+        <a href="admin.html">Voltar ao painel</a>
+        <a href="index.html">Ver site</a>
+      </div>
+    </header>
+
+    <main class="faq-main">
+      <a class="faq-return" href="admin.html">← Voltar ao painel administrativo</a>
+      <section class="faq-hero" aria-labelledby="faq-schedule-title">
+        <p class="eyebrow">Ajuda do painel</p>
+        <h1 id="faq-schedule-title">FAQ da Agenda</h1>
+        <p>Use este guia para configurar a disponibilidade online, cadastrar pausas e bloqueios, entender os horários oferecidos e acompanhar os agendamentos dos clientes.</p>
+        <nav class="faq-toc" aria-label="Nesta página">
+          <a href="#operacao">Como operar</a>
+          <a href="#configuracao">Configuração</a>
+          <a href="#horarios">Horários e pausas</a>
+          <a href="#bloqueios">Bloqueios</a>
+          <a href="#agendamentos">Agendamentos</a>
+          <a href="#duvidas">Dúvidas frequentes</a>
+        </nav>
+      </section>
+
+      <section class="faq-section" id="operacao" aria-labelledby="schedule-operation-title">
+        <div class="faq-section-heading">
+          <p class="eyebrow">Passo a passo</p>
+          <h2 id="schedule-operation-title">Como operar a agenda</h2>
+          <p>Configure primeiro as regras semanais. Depois use bloqueios para exceções e consulte os agendamentos na área de acompanhamento.</p>
+        </div>
+        <div class="faq-steps">
+          <article class="faq-step"><span>Etapa 01</span><h3>Defina as regras gerais</h3><p>Informe antecedência, período disponível, intervalo das opções, preparação e limites operacionais.</p></article>
+          <article class="faq-step"><span>Etapa 02</span><h3>Cadastre os dias</h3><p>Adicione um período para cada dia atendido, com início, fim e uma pausa opcional.</p></article>
+          <article class="faq-step"><span>Etapa 03</span><h3>Salve a disponibilidade</h3><p>Revise as regras, mantenha os períodos desejados como ativos e clique em “Salvar disponibilidade”.</p></article>
+          <article class="faq-step"><span>Etapa 04</span><h3>Registre exceções</h3><p>Use bloqueios para férias, feriados, compromissos ou indisponibilidades em parte do dia.</p></article>
+          <article class="faq-step"><span>Etapa 05</span><h3>Acompanhe clientes</h3><p>Abra “Ver agendamentos marcados” para filtrar, registrar comparecimento, adicionar observações e exportar CSV.</p></article>
+        </div>
+      </section>
+
+      <section class="faq-section" id="configuracao" aria-labelledby="schedule-settings-title">
+        <div class="faq-section-heading">
+          <p class="eyebrow">Glossário</p>
+          <h2 id="schedule-settings-title">Configurações gerais</h2>
+          <p>Esses campos controlam quais datas e horários podem ser oferecidos ao cliente.</p>
+        </div>
+        <dl class="glossary-list">
+          <div class="glossary-item"><dt>Agenda</dt><dd>Calendário conectado ao Google. É um campo informativo e não pode ser alterado nesta tela.</dd></div>
+          <div class="glossary-item"><dt>Fuso horário</dt><dd>Referência usada para exibir e salvar os horários. O Studio B utiliza America/Sao_Paulo.</dd></div>
+          <div class="glossary-item"><dt>Antecedência mínima</dt><dd>Quantidade mínima de horas entre o momento da reserva e o início da sessão. <strong>Exemplo:</strong> 2 impede reservas para menos de duas horas a partir de agora.</dd></div>
+          <div class="glossary-item"><dt>Agenda aberta por quantos dias</dt><dd>Até quantos dias no futuro o cliente pode escolher. <strong>Exemplo:</strong> 45 disponibiliza datas dentro dos próximos 45 dias.</dd></div>
+          <div class="glossary-item"><dt>Intervalo entre opções</dt><dd>Define de quantos em quantos minutos aparecem possíveis horários de início. <strong>Exemplo:</strong> 20 gera opções como 09:00, 09:20 e 09:40, desde que o serviço caiba e não exista conflito.</dd></div>
+          <div class="glossary-item"><dt>Preparação entre sessões</dt><dd>Reserva um tempo livre entre atendimentos confirmados para organização, higienização ou descanso. <strong>Exemplo:</strong> 15 exige pelo menos 15 minutos livres entre duas sessões.</dd></div>
+          <div class="glossary-item"><dt>Limite de atendimentos por dia</dt><dd>Quantidade máxima de reservas online em um dia. Use 0 para não aplicar limite diário.</dd></div>
+          <div class="glossary-item"><dt>Limite para cancelamento</dt><dd>Antecedência mínima para o cliente cancelar ou reagendar pelo link seguro. Depois desse prazo, ele é orientado a falar com o Studio B.</dd></div>
+          <div class="glossary-item"><dt>Lembrete com antecedência</dt><dd>Quantas horas antes da sessão o lembrete será enviado quando os lembretes automáticos estiverem ativados.</dd></div>
+          <div class="glossary-item"><dt>Ativar lembretes</dt><dd>Libera o envio automático de lembretes por e-mail. Ative somente depois da aprovação da integração Google e da validação operacional.</dd></div>
+          <div class="glossary-item"><dt>Ativar agendamento online</dt><dd>Permite que clientes reservem pelo site quando a integração com Google Agenda estiver conectada. Desmarque para suspender temporariamente novas reservas.</dd></div>
+        </dl>
+        <aside class="example-box">
+          <strong>Intervalo não é preparação</strong>
+          <p>Com opções a cada 20 minutos e preparação de 0, uma sessão que termina às 10:00 pode ser seguida por outra às 10:00. Com preparação de 15 minutos, o próximo início compatível com a grade poderá ser 10:20.</p>
+        </aside>
+      </section>
+
+      <section class="faq-section" id="horarios" aria-labelledby="weekly-hours-title">
+        <div class="faq-section-heading">
+          <p class="eyebrow">Rotina semanal</p>
+          <h2 id="weekly-hours-title">Horários, períodos e pausas</h2>
+          <p>As regras semanais se repetem automaticamente. Você pode cadastrar mais de um período para o mesmo dia.</p>
+        </div>
+        <dl class="glossary-list">
+          <div class="glossary-item"><dt>Dia da semana</dt><dd>Dia em que aquela regra se repete. Cadastre somente os dias em que haverá atendimento.</dd></div>
+          <div class="glossary-item"><dt>Início e fim</dt><dd>Janela de atendimento do dia. O sistema oferece apenas sessões que terminem dentro desse período.</dd></div>
+          <div class="glossary-item"><dt>Início e fim da pausa</dt><dd>Faixa indisponível dentro do período, como almoço. Preencha os dois campos ou deixe ambos vazios.</dd></div>
+          <div class="glossary-item"><dt>Ativo</dt><dd>Controla se a regra participa do cálculo. Desmarque para preservar um horário sem oferecê-lo temporariamente.</dd></div>
+          <div class="glossary-item"><dt>Adicionar período</dt><dd>Cria outra regra semanal. É útil para dias diferentes ou para separar manhã e tarde.</dd></div>
+          <div class="glossary-item"><dt>Remover</dt><dd>Retira a regra da edição atual. Clique em “Salvar disponibilidade” para confirmar a nova lista.</dd></div>
+        </dl>
+        <aside class="example-box">
+          <strong>Exemplo com almoço</strong>
+          <p>Terça-feira: início 09:00, fim 18:00, pausa de 12:00 a 13:00 e regra ativa. Nenhuma sessão poderá ocupar o intervalo da pausa.</p>
+        </aside>
+      </section>
+
+      <section class="faq-section" id="bloqueios" aria-labelledby="blocked-periods-help-title">
+        <div class="faq-section-heading">
+          <p class="eyebrow">Exceções</p>
+          <h2 id="blocked-periods-help-title">Bloqueios de datas e horários</h2>
+          <p>Bloqueios substituem temporariamente a rotina semanal sem exigir alteração dos horários recorrentes.</p>
+        </div>
+        <dl class="glossary-list">
+          <div class="glossary-item"><dt>Data e hora inicial</dt><dd>Momento a partir do qual o Studio B ficará indisponível.</dd></div>
+          <div class="glossary-item"><dt>Data e hora final</dt><dd>Momento em que a indisponibilidade termina. O fim deve ser posterior ao início.</dd></div>
+          <div class="glossary-item"><dt>Motivo</dt><dd>Nota interna para identificar o bloqueio, como “Feriado” ou “Consulta”. Não é exibida ao cliente.</dd></div>
+          <div class="glossary-item"><dt>Bloquear o dia inteiro</dt><dd>Ignora as horas e bloqueia integralmente todas as datas do período. A data final também é incluída.</dd></div>
+          <div class="glossary-item"><dt>Remover bloqueio</dt><dd>Libera novamente o período, desde que ele esteja dentro de uma regra semanal ativa e não exista conflito na Agenda Google.</dd></div>
+        </dl>
+        <aside class="example-box">
+          <strong>Dois usos comuns</strong>
+          <ul><li>Compromisso de duas horas: informe a mesma data e as horas 14:00 a 16:00.</li><li>Férias de 10 a 15 de janeiro: informe as duas datas e marque “Bloquear o dia inteiro”.</li></ul>
+        </aside>
+      </section>
+
+      <section class="faq-section" id="agendamentos" aria-labelledby="appointments-help-title">
+        <div class="faq-section-heading">
+          <p class="eyebrow">Acompanhamento</p>
+          <h2 id="appointments-help-title">Agendamentos marcados</h2>
+          <p>Esta área reúne os dados necessários para localizar e acompanhar os atendimentos.</p>
+        </div>
+        <dl class="glossary-list">
+          <div class="glossary-item"><dt>Buscar</dt><dd>Localiza pelo nome, e-mail, telefone ou serviço do cliente.</dd></div>
+          <div class="glossary-item"><dt>Status</dt><dd><strong>Confirmado:</strong> reserva concluída. <strong>Pendente:</strong> processamento ainda não finalizado. <strong>Cancelado:</strong> horário liberado pelo fluxo de cancelamento.</dd></div>
+          <div class="glossary-item"><dt>Período De / Até</dt><dd>Limita a consulta a uma faixa de datas. A data final é incluída na pesquisa.</dd></div>
+          <div class="glossary-item"><dt>Convite de agenda</dt><dd>Indica se o cliente solicitou receber o evento também em sua agenda.</dd></div>
+          <div class="glossary-item"><dt>Comparecimento</dt><dd>Registro interno: Agendado, Concluído ou Não compareceu.</dd></div>
+          <div class="glossary-item"><dt>Observações privadas</dt><dd>Anotações visíveis somente no painel administrativo. Não são enviadas ao cliente.</dd></div>
+          <div class="glossary-item"><dt>Exportar CSV</dt><dd>Baixa os agendamentos atualmente carregados para consulta em uma planilha.</dd></div>
+        </dl>
+      </section>
+
+      <section class="faq-section" id="duvidas" aria-labelledby="schedule-questions-title">
+        <div class="faq-section-heading">
+          <p class="eyebrow">FAQ</p>
+          <h2 id="schedule-questions-title">Dúvidas frequentes</h2>
+        </div>
+        <details class="faq-question"><summary>Por que um horário não aparece para o cliente?</summary><div><p>Verifique a regra semanal, a pausa, a duração do serviço, a antecedência mínima, a preparação, o limite diário, os bloqueios cadastrados, os agendamentos existentes e os eventos ocupados no Google Agenda.</p></div></details>
+        <details class="faq-question"><summary>Devo alterar a regra semanal para um feriado?</summary><div><p>Não. Cadastre um bloqueio de dia inteiro. Assim, a rotina semanal continuará válida para as semanas seguintes.</p></div></details>
+        <details class="faq-question"><summary>Posso cadastrar dois períodos no mesmo dia?</summary><div><p>Sim. Por exemplo, 09:00–12:00 e 14:00–18:00. Evite períodos sobrepostos e salve a disponibilidade depois da alteração.</p></div></details>
+        <details class="faq-question"><summary>Como suspender novas reservas sem apagar horários?</summary><div><p>Desmarque “Ativar agendamento online” e salve. As regras permanecem cadastradas para uma futura reativação.</p></div></details>
+        <details class="faq-question"><summary>Como cancelar ou reagendar um cliente?</summary><div><p>O cliente usa o link seguro recebido por e-mail. A área administrativa acompanha o resultado e registra informações internas, mas não substitui esse fluxo seguro.</p></div></details>
+        <details class="faq-question"><summary>Quando devo ativar os lembretes automáticos?</summary><div><p>Somente após a aprovação da integração Google e a confirmação de que o processo de envio está operacional. Até lá, mantenha a opção desmarcada.</p></div></details>
+      </section>
+    </main>
+  </body>
+</html>
