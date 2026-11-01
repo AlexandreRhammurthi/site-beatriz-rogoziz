@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=9" />
+    <link rel="stylesheet" href="admin.css?v=10" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
     <script src="admin-utils.js?v=4" defer></script>
-    <script src="admin.js?v=11" defer></script>
+    <script src="admin.js?v=12" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -23,6 +23,7 @@
         <small>STUDIO B</small>
       </a>
       <div class="header-actions">
+        <button class="link-button" type="button" data-admin-home hidden>Início do painel</button>
         <a href="index.html">Ver site</a>
         <button class="link-button" type="button" data-logout hidden>Sair</button>
       </div>
@@ -60,7 +61,70 @@
       </section>
 
       <section class="dashboard" data-dashboard hidden>
-        <section class="booking-settings-card" aria-labelledby="booking-settings-title">
+        <section class="admin-view admin-portal" data-admin-view="home" aria-labelledby="admin-home-title">
+          <div class="portal-heading">
+            <p class="eyebrow">Painel Studio B</p>
+            <h1 id="admin-home-title" tabindex="-1">O que você deseja administrar?</h1>
+            <p>Escolha uma área para acessar somente as ferramentas que você precisa agora.</p>
+          </div>
+          <div class="admin-option-grid">
+            <button class="admin-option-card" type="button" data-admin-target="services">
+              <span class="option-index" aria-hidden="true">01</span>
+              <span class="option-copy">
+                <strong>Serviços e valores</strong>
+                <span>Edite tratamentos, descrições, duração, sessões, pacotes e valores promocionais.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="admin-option-card" type="button" data-admin-target="schedule-menu">
+              <span class="option-index" aria-hidden="true">02</span>
+              <span class="option-copy">
+                <strong>Agenda</strong>
+                <span>Configure a disponibilidade do Studio B ou consulte os atendimentos marcados.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="admin-view admin-portal" data-admin-view="schedule-menu" aria-labelledby="schedule-menu-title" hidden>
+          <button class="view-back" type="button" data-admin-target="home">← Voltar ao início</button>
+          <div class="portal-heading">
+            <p class="eyebrow">Agenda</p>
+            <h1 id="schedule-menu-title" tabindex="-1">Como você deseja administrar a agenda?</h1>
+            <p>Escolha entre configurar a disponibilidade do Studio B ou acompanhar os agendamentos dos clientes.</p>
+          </div>
+          <div class="admin-option-grid">
+            <button class="admin-option-card" type="button" data-admin-target="schedule-settings">
+              <span class="option-index" aria-hidden="true">01</span>
+              <span class="option-copy">
+                <strong>Administrar a agenda</strong>
+                <span>Defina horários, pausas, limites, bloqueios, feriados e períodos indisponíveis.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="admin-option-card" type="button" data-admin-target="appointments">
+              <span class="option-index" aria-hidden="true">02</span>
+              <span class="option-copy">
+                <strong>Ver agendamentos marcados</strong>
+                <span>Consulte clientes, próximos atendimentos, histórico e informações de acompanhamento.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="admin-view" data-admin-view="schedule-settings" aria-labelledby="booking-settings-title" hidden>
+          <div class="view-heading">
+            <button class="view-back" type="button" data-admin-target="schedule-menu">← Voltar para Agenda</button>
+            <div>
+              <p class="eyebrow">Agenda</p>
+              <h1 tabindex="-1">Administrar a agenda</h1>
+              <p>Configure quando o Studio B estará disponível para novos agendamentos.</p>
+            </div>
+          </div>
+
+          <section class="booking-settings-card" aria-labelledby="booking-settings-title">
           <div class="settings-heading">
             <div>
               <p class="eyebrow">Agenda</p>
@@ -90,9 +154,9 @@
             <div class="availability-list" data-rules-list></div>
             <div class="settings-actions"><button class="button primary" type="submit">Salvar disponibilidade</button></div>
           </form>
-        </section>
+          </section>
 
-        <section class="booking-settings-card" aria-labelledby="blocked-periods-title">
+          <section class="booking-settings-card" aria-labelledby="blocked-periods-title">
           <div class="settings-heading">
             <div>
               <p class="eyebrow">Exceções da agenda</p>
@@ -112,9 +176,19 @@
             <div class="settings-actions"><button class="button primary" type="submit">Adicionar bloqueio</button></div>
           </form>
           <div class="blocked-periods" data-blocked-periods-list aria-live="polite"></div>
+          </section>
         </section>
 
-        <section class="booking-settings-card" aria-labelledby="appointments-title">
+        <section class="admin-view" data-admin-view="appointments" aria-labelledby="appointments-title" hidden>
+          <div class="view-heading">
+            <button class="view-back" type="button" data-admin-target="schedule-menu">← Voltar para Agenda</button>
+            <div>
+              <p class="eyebrow">Agenda</p>
+              <h1 tabindex="-1">Agendamentos marcados</h1>
+              <p>Consulte e acompanhe os atendimentos do Studio B.</p>
+            </div>
+          </div>
+          <section class="booking-settings-card" aria-labelledby="appointments-title">
           <div class="settings-heading">
             <div>
               <p class="eyebrow">Atendimentos</p>
@@ -134,17 +208,23 @@
           </form>
           <div class="appointments-summary" data-appointments-summary aria-live="polite"></div>
           <div class="appointments-list" data-appointments-list aria-live="polite"></div>
+          </section>
         </section>
 
-        <div class="dashboard-heading">
-          <div>
-            <p class="eyebrow">Conteúdo do site</p>
-            <h1>Serviços e valores</h1>
-            <p>As alterações salvas aqui aparecem automaticamente no site.</p>
+        <section class="admin-view" data-admin-view="services" aria-labelledby="services-title" hidden>
+          <div class="view-heading services-view-heading">
+            <button class="view-back" type="button" data-admin-target="home">← Voltar ao início</button>
+            <div class="dashboard-heading">
+              <div>
+                <p class="eyebrow">Conteúdo do site</p>
+                <h1 id="services-title" tabindex="-1">Serviços e valores</h1>
+                <p>As alterações salvas aqui aparecem automaticamente no site.</p>
+              </div>
+              <button class="button primary" type="button" data-add-service>Adicionar serviço</button>
+            </div>
           </div>
-          <button class="button primary" type="button" data-add-service>Adicionar serviço</button>
-        </div>
-        <div class="services-list" data-services-list></div>
+          <div class="services-list" data-services-list></div>
+        </section>
       </section>
 
       <p class="status" role="status" aria-live="polite" data-status></p>

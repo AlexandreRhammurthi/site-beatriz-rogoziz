@@ -3,6 +3,8 @@ const authPanel = document.querySelector("[data-auth-panel]");
 const claimPanel = document.querySelector("[data-claim-panel]");
 const dashboard = document.querySelector("[data-dashboard]");
 const logoutButton = document.querySelector("[data-logout]");
+const adminHomeButton = document.querySelector("[data-admin-home]");
+const adminViews = Array.from(document.querySelectorAll("[data-admin-view]"));
 const servicesList = document.querySelector("[data-services-list]");
 const statusElement = document.querySelector("[data-status]");
 const priceTemplate = document.querySelector("#price-row-template");
@@ -25,6 +27,8 @@ const escapeHTML = (value = "") => String(value)
 
 let statusTimer;
 let appointmentsCache = [];
+let currentAdminView = "home";
+const loadedAdminViews = new Set();
 const callbackUrl = () => `${window.location.origin}${window.location.pathname}`;
 
 const friendlyAuthError = (error) => {
@@ -49,6 +53,7 @@ const setView = (view) => {
   claimPanel.hidden = view !== "claim";
   dashboard.hidden = view !== "dashboard";
   logoutButton.hidden = view === "auth";
+  adminHomeButton.hidden = view !== "dashboard" || currentAdminView === "home";
 };
 
 const setBusy = (button, busy) => {
@@ -284,9 +289,36 @@ const loadAppointments = async () => {
   renderAppointments();
 };
 
+const loadAdminView = async (view) => {
+  if (loadedAdminViews.has(view)) return;
+  if (view === "services") await loadServices();
+  if (view === "schedule-settings") await Promise.all([loadBookingSettings(), loadBlockedPeriods()]);
+  if (view === "appointments") await loadAppointments();
+  loadedAdminViews.add(view);
+};
+
+const showAdminView = async (view, { focus = true } = {}) => {
+  const target = adminViews.find((item) => item.dataset.adminView === view);
+  if (!target) return;
+  dashboard.setAttribute("aria-busy", "true");
+  try {
+    await loadAdminView(view);
+    adminViews.forEach((item) => { item.hidden = item !== target; });
+    currentAdminView = view;
+    adminHomeButton.hidden = view === "home";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (focus) target.querySelector("h1, h2")?.focus({ preventScroll: true });
+  } catch (error) {
+    showStatus(error.message || "Não foi possível abrir esta área do painel.", true);
+  } finally {
+    dashboard.removeAttribute("aria-busy");
+  }
+};
+
 const showDashboard = async () => {
+  const isFirstEntry = dashboard.hidden;
   setView("dashboard");
-  await Promise.all([loadServices(), loadBookingSettings(), loadBlockedPeriods(), loadAppointments()]);
+  await showAdminView(isFirstEntry ? "home" : currentAdminView, { focus: false });
 };
 
 const handleSession = async (session) => {
@@ -372,7 +404,18 @@ document.querySelector("[data-claim-form]")?.addEventListener("submit", async (e
 
 logoutButton?.addEventListener("click", async () => {
   await client.auth.signOut();
+  loadedAdminViews.clear();
+  appointmentsCache = [];
+  currentAdminView = "home";
   setView("auth");
+});
+
+adminHomeButton?.addEventListener("click", () => showAdminView("home"));
+
+dashboard?.addEventListener("click", (event) => {
+  const navigationButton = event.target.closest("[data-admin-target]");
+  if (!navigationButton) return;
+  showAdminView(navigationButton.dataset.adminTarget);
 });
 
 document.querySelector("[data-add-rule]")?.addEventListener("click", () => addRuleRow());

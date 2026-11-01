@@ -21,6 +21,11 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.equal(manage.status, 200);
   assert.match(await booking.text(), /href="privacy\.html"/);
   const adminHtml = await admin.text();
+  assert.match(adminHtml, /data-admin-view="home"/);
+  assert.match(adminHtml, /data-admin-view="schedule-menu"/);
+  assert.match(adminHtml, /data-admin-target="services"/);
+  assert.match(adminHtml, /data-admin-target="schedule-settings"/);
+  assert.match(adminHtml, /data-admin-target="appointments"/);
   assert.match(adminHtml, /data-blocked-period-form/);
   assert.match(adminHtml, /data-appointments-filter/);
   assert.match(adminHtml, /data-appointments-list/);
