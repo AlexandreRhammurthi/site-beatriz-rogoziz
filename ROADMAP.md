@@ -147,3 +147,4 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | 01/11/2026 | SEO, cache público, performance e CSP | testes de metadados, cache e segurança | publicado |
 | 02/11/2026 | Escolha de sessão ou pacote no agendamento | contrato da API, snapshot comercial, fluxo público e administrativo | publicado |
 | 02/11/2026 | Dashboard operacional | agenda, demanda, comparecimento, alertas de pacotes e QA responsivo | publicado |
+| 02/11/2026 | Cancelamento, recuperação e confirmação reforçados | confirmação explícita, recuperação por data, rotação de link e reenvio controlado | publicado |

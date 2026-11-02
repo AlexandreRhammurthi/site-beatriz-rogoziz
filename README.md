@@ -33,7 +33,7 @@ O fluxo não exige cadastro do cliente. Ele informa nome, WhatsApp, e-mail, serv
 - bloqueios e agendamentos existentes no Supabase;
 - períodos ocupados no Google Agenda `Studio B - Beatriz Rogoziz`.
 
-Cada confirmação gera um link privado de gerenciamento. O banco armazena apenas o hash do token. Se o cliente perder o link, a recuperação exige os dados do agendamento e um código temporário enviado ao e-mail cadastrado. E-mail, telefone e data nunca cancelam diretamente um horário.
+Cada confirmação gera um link privado de gerenciamento. O banco armazena apenas o hash do token. Se o cliente perder o link, a recuperação exige e-mail, telefone, data do atendimento e um código temporário enviado ao e-mail cadastrado. O código cria um novo link, invalida os anteriores e envia uma cópia por e-mail. E-mail, telefone e data nunca cancelam diretamente um horário. O cliente também pode reenviar a confirmação pelo link privado, com intervalo mínimo de segurança.
 
 O agendamento permanece desativado até que a integração Google esteja autorizada e os horários sejam cadastrados no painel.
 

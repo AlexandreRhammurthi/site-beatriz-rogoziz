@@ -12,9 +12,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="booking.css?v=4" />
+    <link rel="stylesheet" href="booking.css?v=6" />
     <script src="supabase-config.js?v=2" defer></script>
-    <script src="manage-booking.js?v=3" defer></script>
+    <script src="manage-booking.js?v=4" defer></script>
   </head>
   <body>
     <header class="booking-header">
@@ -32,10 +32,23 @@
           <div class="appointment-details" data-appointment-details></div>
           <div class="manage-actions">
             <button class="button primary" type="button" data-open-reschedule>Reagendar</button>
-            <button class="button danger" type="button" data-cancel>Cancelar agendamento</button>
+            <button class="button secondary" type="button" data-resend-confirmation>Reenviar confirmação</button>
+            <button class="button danger" type="button" data-open-cancel>Cancelar agendamento</button>
           </div>
           <p class="security-note">O reagendamento e o cancelamento estão sujeitos ao prazo configurado pelo Studio B.</p>
         </div>
+
+        <form class="cancel-confirm-form" data-cancel-confirm hidden>
+          <p class="eyebrow">Confirmação necessária</p>
+          <h2>Cancelar este agendamento?</h2>
+          <div class="appointment-details" data-cancel-details></div>
+          <p class="field-help">O horário será liberado imediatamente. Esta ação não poderá ser desfeita pelo site.</p>
+          <label class="consent"><input type="checkbox" name="understood" required /> <span>Confirmo que desejo cancelar este atendimento.</span></label>
+          <div class="form-actions">
+            <button class="button secondary" type="button" data-close-cancel>Manter agendamento</button>
+            <button class="button danger" type="submit">Confirmar cancelamento</button>
+          </div>
+        </form>
 
         <form class="reschedule-form" data-reschedule-form hidden>
           <h2>Escolha um novo horário</h2>
@@ -54,21 +67,22 @@
           <form data-recovery-form>
             <label>E-mail<input name="email" type="email" autocomplete="email" required /></label>
             <label>WhatsApp<input name="phone" type="tel" inputmode="tel" autocomplete="tel" required /></label>
-            <div class="field-row">
-              <label>Data<input name="date" type="date" required /></label>
-              <label>Horário<input name="time" type="time" required /></label>
-            </div>
+            <label>Data do atendimento<input name="date" type="date" required /></label>
             <button class="button primary" type="submit">Enviar código por e-mail</button>
           </form>
 
           <form data-code-form hidden>
-            <p>Digite o código de seis números enviado ao seu e-mail.</p>
+            <p>Digite o código de seis números enviado ao seu e-mail. Ele é válido por 10 minutos.</p>
             <label>Código<input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required /></label>
-            <button class="button primary" type="submit">Validar código</button>
+            <div class="form-actions recovery-code-actions">
+              <button class="button secondary" type="button" data-recovery-back>Corrigir dados</button>
+              <button class="button primary" type="submit">Validar código</button>
+            </div>
+            <button class="text-button" type="button" data-resend-code>Enviar um novo código</button>
           </form>
         </div>
 
-        <div class="notice success" data-cancelled hidden><h2>Agendamento cancelado.</h2><p>O horário foi liberado e enviamos a confirmação para seu e-mail.</p></div>
+        <div class="notice success" data-cancelled hidden><h2>Agendamento cancelado.</h2><p data-cancelled-copy>O horário foi liberado.</p><a class="button primary button-link" href="booking.html">Fazer novo agendamento</a></div>
         <div class="notice success" data-rescheduled hidden><h2>Agendamento atualizado.</h2><p>A nova data foi confirmada e a agenda do Studio B foi atualizada.</p></div>
         <p class="status" role="status" aria-live="polite" data-status></p>
       </section>

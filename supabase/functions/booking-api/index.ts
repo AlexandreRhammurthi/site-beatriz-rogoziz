@@ -178,12 +178,17 @@ const addDateValue = (dateValue: string, days: number) => {
   return date.toISOString().slice(0, 10);
 };
 
-const recoveryStart = (payload: Record<string, unknown>, timezone: string) => {
+const recoveryDayRange = (
+  payload: Record<string, unknown>,
+  timezone: string,
+) => {
   const dateValue = String(payload.date || "");
-  const timeValue = String(payload.time || "");
-  if (!isDate(dateValue) || !/^\d{2}:\d{2}$/.test(timeValue)) return null;
-  const date = zonedTimeToUtc(dateValue, `${timeValue}:00`, timezone);
-  return Number.isNaN(date.getTime()) ? null : date;
+  if (!isDate(dateValue)) return null;
+  const start = zonedTimeToUtc(dateValue, "00:00:00", timezone);
+  const end = zonedTimeToUtc(addDateValue(dateValue, 1), "00:00:00", timezone);
+  return Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())
+    ? null
+    : { start, end };
 };
 
 const getGoogleAccessToken = async () => {
@@ -737,19 +742,33 @@ const confirmationEmail = (
     <p style="font-size:12px;color:#687675">Este link é pessoal. Não o encaminhe a outras pessoas.</p>
   </div>`;
 
-const recoveryEmail = (name: string, code: string) => `
+const recoveryEmail = (
+  name: string,
+  code: string,
+  service: string,
+  start: Date,
+  timezone: string,
+) => `
   <div style="font-family:Arial,sans-serif;color:#143434;line-height:1.6;max-width:620px;margin:auto">
     <h1 style="font-family:Georgia,serif;font-weight:normal;color:#0b3b3c">Código para gerenciar seu agendamento</h1>
     <p>Olá, ${
   html(name)
-}. Use o código abaixo para recuperar o acesso ao seu agendamento:</p>
+}. Use o código abaixo para recuperar o acesso ao seu agendamento de <strong>${
+  html(service)
+}</strong>, em ${
+  html(new Intl.DateTimeFormat("pt-BR", {
+    timeZone: timezone,
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(start))
+}:</p>
     <p style="font-size:28px;letter-spacing:8px;font-weight:bold">${
   html(code)
 }</p>
     <p>O código expira em 10 minutos. Se você não fez esta solicitação, ignore este e-mail.</p>
   </div>`;
 
-const rescheduleEmail = (
+const recoveredAccessEmail = (
   name: string,
   service: string,
   start: Date,
@@ -757,9 +776,54 @@ const rescheduleEmail = (
   manageUrl: string,
 ) => `
   <div style="font-family:Arial,sans-serif;color:#143434;line-height:1.6;max-width:620px;margin:auto">
+    <h1 style="font-family:Georgia,serif;font-weight:normal;color:#0b3b3c">Acesso recuperado</h1>
+    <p>Olá, ${html(name)}. Um novo link seguro foi criado para seu agendamento.</p>
+    <p><strong>${html(service)}</strong><br>${
+  html(new Intl.DateTimeFormat("pt-BR", {
+    timeZone: timezone,
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(start))
+}</p>
+    <p><a href="${html(manageUrl)}" style="display:inline-block;background:#0b3b3c;color:white;padding:12px 18px;text-decoration:none">Gerenciar agendamento</a></p>
+    <p style="font-size:12px;color:#687675">O link anterior deixou de funcionar. Este novo link é pessoal e não deve ser compartilhado.</p>
+  </div>`;
+
+const cancellationEmail = (
+  appointment: Record<string, unknown>,
+  timezone: string,
+) => `
+  <div style="font-family:Arial,sans-serif;color:#143434;line-height:1.6;max-width:620px;margin:auto">
+    <h1 style="font-family:Georgia,serif;font-weight:normal;color:#0b3b3c">Agendamento cancelado</h1>
+    <p>Olá, ${html(appointment.customer_name)}. O atendimento abaixo foi cancelado e o horário foi liberado.</p>
+    <p><strong>${html(
+  appointment.services && typeof appointment.services === "object"
+    ? (appointment.services as Record<string, unknown>).name
+    : "Atendimento"
+)}</strong>${appointment.selected_option_label ? `<br>${html(appointment.selected_option_label)}` : ""}<br>${
+  html(new Intl.DateTimeFormat("pt-BR", {
+    timeZone: timezone,
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(new Date(String(appointment.starts_at))))
+}</p>
+    <p>Se precisar de outro horário, faça um novo agendamento pelo site.</p>
+  </div>`;
+
+const rescheduleEmail = (
+  name: string,
+  service: string,
+  optionLabel: string | null,
+  start: Date,
+  timezone: string,
+  manageUrl: string,
+) => `
+  <div style="font-family:Arial,sans-serif;color:#143434;line-height:1.6;max-width:620px;margin:auto">
     <h1 style="font-family:Georgia,serif;font-weight:normal;color:#0b3b3c">Agendamento atualizado</h1>
     <p>Olá, ${html(name)}. A nova data do seu cuidado no Studio B foi confirmada.</p>
-    <p><strong>${html(service)}</strong><br>${
+    <p><strong>${html(service)}</strong>${
+  optionLabel ? `<br>${html(optionLabel)}` : ""
+}<br>${
   html(
     new Intl.DateTimeFormat("pt-BR", {
       timeZone: timezone,
@@ -1220,6 +1284,7 @@ Deno.serve(async (request) => {
           rescheduleEmail(
             appointment.customer_name,
             availability.service.name,
+            appointment.selected_option_label || null,
             new Date(selected.start),
             settings.timezone,
             manageUrl,
@@ -1233,6 +1298,73 @@ Deno.serve(async (request) => {
         success: true,
         email_delivered: emailDelivered,
         appointment: formatAppointment(updated, settings.timezone),
+      });
+    }
+
+    if (action === "resend-confirmation") {
+      const token = String(payload.token || "");
+      if (token.length < 32) {
+        return json(origin, { error: "Link de gerenciamento inválido." }, 400);
+      }
+      const tokenHash = await secretHash(token);
+      const { data: appointment, error } = await admin
+        .from("appointments")
+        .select("*, services(name)")
+        .eq("manage_token_hash", tokenHash)
+        .single();
+      if (error || !appointment) {
+        return json(origin, {
+          error: "Agendamento não encontrado ou link inválido.",
+        }, 404);
+      }
+      if (appointment.status === "cancelled") {
+        return json(origin, {
+          error: "Não é possível reenviar a confirmação de um agendamento cancelado.",
+        }, 409);
+      }
+      const { data: claimed, error: claimError } = await admin.rpc(
+        "claim_appointment_confirmation_resend",
+        { p_appointment_id: appointment.id, p_now: new Date().toISOString() },
+      );
+      if (claimError) throw claimError;
+      if (!claimed) {
+        return json(origin, {
+          error: "A confirmação já foi enviada recentemente. Aguarde 10 minutos para solicitar novamente.",
+        }, 429);
+      }
+      const manageUrl = `${SITE_URL}/manage-booking.html#token=${token}`;
+      try {
+        await sendEmail(
+          appointment.customer_email,
+          "Confirmação do agendamento — Studio B",
+          confirmationEmail(
+            appointment.customer_name,
+            appointment.services?.name || "Atendimento",
+            appointment.selected_option_label || null,
+            appointment.selected_option_price_amount !== null &&
+                appointment.selected_option_price_amount !== undefined
+              ? new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              }).format(Number(appointment.selected_option_price_amount))
+              : appointment.selected_option_custom_value || null,
+            new Date(appointment.starts_at),
+            settings.timezone,
+            manageUrl,
+            appointment.calendar_sync_requested === true,
+          ),
+        );
+      } catch (emailError) {
+        await admin.from("appointments").update({ confirmation_resent_at: null })
+          .eq("id", appointment.id);
+        console.error("Confirmation resend failed", emailError);
+        return json(origin, {
+          error: "Não foi possível enviar a confirmação agora. Tente novamente em alguns minutos.",
+        }, 502);
+      }
+      return json(origin, {
+        success: true,
+        message: "Enviamos uma nova confirmação para o e-mail do agendamento.",
       });
     }
 
@@ -1266,32 +1398,48 @@ Deno.serve(async (request) => {
             `O cancelamento online encerra ${settings.cancellation_notice_hours} horas antes do atendimento. Fale com o Studio B pelo WhatsApp.`,
         }, 409);
       }
-      if (appointment.google_event_id) {
-        await deleteGoogleEvent(
-          appointment.google_event_id,
-          appointment.calendar_sync_requested,
-        );
-      }
       const { data: cancelled, error: updateError } = await admin.from(
         "appointments",
       ).update({ status: "cancelled", cancelled_at: new Date().toISOString() })
         .eq("id", appointment.id).select("*, services(name)").single();
       if (updateError) throw updateError;
+      if (appointment.google_event_id) {
+        try {
+          await deleteGoogleEvent(
+            appointment.google_event_id,
+            appointment.calendar_sync_requested,
+          );
+        } catch (calendarError) {
+          console.error("Cancellation calendar update failed", calendarError);
+          const { error: rollbackError } = await admin.from("appointments")
+            .update({
+              status: appointment.status,
+              cancelled_at: appointment.cancelled_at,
+            }).eq("id", appointment.id);
+          if (rollbackError) {
+            console.error("Cancellation rollback failed", rollbackError);
+          }
+          return json(origin, {
+            error:
+              "Não foi possível atualizar a agenda agora. O agendamento foi mantido; tente novamente em alguns minutos.",
+          }, 502);
+        }
+      }
+      let emailDelivered = true;
       try {
         await sendEmail(
           appointment.customer_email,
           "Agendamento cancelado — Studio B",
-          `<div style="font-family:Arial,sans-serif;color:#143434;line-height:1.6"><h1 style="font-family:Georgia,serif;font-weight:normal">Agendamento cancelado</h1><p>Olá, ${
-            html(appointment.customer_name)
-          }. Seu agendamento de <strong>${
-            html(appointment.services?.name)
-          }</strong> foi cancelado.</p></div>`,
+          cancellationEmail(cancelled, settings.timezone),
         );
-      } catch (error) {
-        console.error("Cancellation email failed", error);
+      } catch (emailError) {
+        emailDelivered = false;
+        console.error("Cancellation email failed", emailError);
       }
       return json(origin, {
         success: true,
+        email_delivered: emailDelivered,
+        calendar_updated: true,
         appointment: formatAppointment(cancelled, settings.timezone),
       });
     }
@@ -1299,50 +1447,66 @@ Deno.serve(async (request) => {
     if (action === "recovery-request") {
       const email = normalizeEmail(payload.email);
       const phone = normalizePhone(payload.phone);
-      const startsAt = recoveryStart(payload, settings.timezone);
+      const range = recoveryDayRange(payload, settings.timezone);
       const generic = {
         success: true,
         message:
           "Se os dados coincidirem, enviaremos um código para o e-mail informado.",
       };
-      if (!isEmail(email) || !/^\d{10,13}$/.test(phone) || !startsAt) {
+      if (!isEmail(email) || !/^\d{10,13}$/.test(phone) || !range) {
         return json(origin, generic);
       }
 
-      const from = new Date(startsAt.getTime() - 60000).toISOString();
-      const to = new Date(startsAt.getTime() + 60000).toISOString();
-      const { data: appointment } = await admin.from("appointments").select(
-        "id, customer_name, customer_email",
+      const { data: appointments } = await admin.from("appointments").select(
+        "id, customer_name, customer_email, starts_at, services(name)",
       ).eq("customer_email", email).eq("customer_phone", phone).in("status", [
         "pending",
         "confirmed",
-      ]).gte("starts_at", from).lte("starts_at", to).maybeSingle();
-      if (!appointment) return json(origin, generic);
+      ]).gte("starts_at", range.start.toISOString()).lt(
+        "starts_at",
+        range.end.toISOString(),
+      ).order("starts_at").limit(5);
+      if (!appointments?.length) return json(origin, generic);
 
       const since = new Date(Date.now() - 30 * 60000).toISOString();
-      const { count } = await admin.from("booking_recovery_codes").select(
-        "id",
-        { count: "exact", head: true },
-      ).eq("appointment_id", appointment.id).gte("created_at", since);
-      if ((count || 0) >= 3) return json(origin, generic);
+      for (const appointment of appointments) {
+        const { count } = await admin.from("booking_recovery_codes").select(
+          "id",
+          { count: "exact", head: true },
+        ).eq("appointment_id", appointment.id).gte("created_at", since);
+        if ((count || 0) >= 3) continue;
 
-      const code = String(
-        crypto.getRandomValues(new Uint32Array(1))[0] % 1000000,
-      ).padStart(6, "0");
-      const codeHash = await secretHash(`${appointment.id}:${code}`);
-      await admin.from("booking_recovery_codes").insert({
-        appointment_id: appointment.id,
-        code_hash: codeHash,
-        expires_at: new Date(Date.now() + 10 * 60000).toISOString(),
-      });
-      try {
-        await sendEmail(
-          appointment.customer_email,
-          "Código de acesso — Studio B",
-          recoveryEmail(appointment.customer_name, code),
-        );
-      } catch (error) {
-        console.error("Recovery email failed", error);
+        const code = String(
+          crypto.getRandomValues(new Uint32Array(1))[0] % 1000000,
+        ).padStart(6, "0");
+        const codeHash = await secretHash(`${appointment.id}:${code}`);
+        const { data: recovery, error: insertError } = await admin.from(
+          "booking_recovery_codes",
+        ).insert({
+          appointment_id: appointment.id,
+          code_hash: codeHash,
+          expires_at: new Date(Date.now() + 10 * 60000).toISOString(),
+        }).select("id").single();
+        if (insertError) throw insertError;
+        try {
+          await sendEmail(
+            appointment.customer_email,
+            "Código de acesso — Studio B",
+            recoveryEmail(
+              appointment.customer_name,
+              code,
+              appointment.services?.name || "Atendimento",
+              new Date(appointment.starts_at),
+              settings.timezone,
+            ),
+          );
+        } catch (emailError) {
+          await admin.from("booking_recovery_codes").delete().eq(
+            "id",
+            recovery.id,
+          );
+          console.error("Recovery email failed", emailError);
+        }
       }
       return json(origin, generic);
     }
@@ -1350,54 +1514,93 @@ Deno.serve(async (request) => {
     if (action === "recovery-confirm") {
       const email = normalizeEmail(payload.email);
       const phone = normalizePhone(payload.phone);
-      const startsAt = recoveryStart(payload, settings.timezone);
+      const range = recoveryDayRange(payload, settings.timezone);
       const code = String(payload.code || "").replace(/\D/g, "");
       if (
-        !isEmail(email) || !/^\d{10,13}$/.test(phone) || !startsAt ||
+        !isEmail(email) || !/^\d{10,13}$/.test(phone) || !range ||
         code.length !== 6
       ) {
         return json(origin, { error: "Código inválido ou expirado." }, 400);
       }
-      const from = new Date(startsAt.getTime() - 60000).toISOString();
-      const to = new Date(startsAt.getTime() + 60000).toISOString();
-      const { data: appointment } = await admin.from("appointments").select(
-        "id",
+      const { data: appointments } = await admin.from("appointments").select(
+        "id, customer_name, customer_email, starts_at, services(name)",
       ).eq("customer_email", email).eq("customer_phone", phone).in("status", [
         "pending",
         "confirmed",
-      ]).gte("starts_at", from).lte("starts_at", to).maybeSingle();
+      ]).gte("starts_at", range.start.toISOString()).lt(
+        "starts_at",
+        range.end.toISOString(),
+      ).limit(5);
+      if (!appointments?.length) {
+        return json(origin, { error: "Código inválido ou expirado." }, 400);
+      }
+
+      const appointmentIds = appointments.map((appointment) => appointment.id);
+      const { data: recoveries } = await admin.from("booking_recovery_codes")
+        .select("*").in("appointment_id", appointmentIds).is("used_at", null)
+        .gt("expires_at", new Date().toISOString()).lt("attempt_count", 5)
+        .order("created_at", { ascending: false }).limit(20);
+      if (!recoveries?.length) {
+        return json(origin, { error: "Código inválido ou expirado." }, 400);
+      }
+
+      let matchedRecovery: Record<string, unknown> | null = null;
+      for (const recovery of recoveries) {
+        const suppliedHash = await secretHash(
+          `${recovery.appointment_id}:${code}`,
+        );
+        if (suppliedHash === recovery.code_hash) {
+          matchedRecovery = recovery;
+          break;
+        }
+      }
+      if (!matchedRecovery) {
+        await Promise.all(recoveries.map((recovery) =>
+          admin.from("booking_recovery_codes").update({
+            attempt_count: Number(recovery.attempt_count) + 1,
+          }).eq("id", recovery.id)
+        ));
+        return json(origin, { error: "Código inválido ou expirado." }, 400);
+      }
+
+      const appointment = appointments.find((item) =>
+        item.id === matchedRecovery?.appointment_id
+      );
       if (!appointment) {
         return json(origin, { error: "Código inválido ou expirado." }, 400);
       }
-
-      const { data: recovery } = await admin.from("booking_recovery_codes")
-        .select("*").eq("appointment_id", appointment.id).is("used_at", null)
-        .gt("expires_at", new Date().toISOString()).order("created_at", {
-          ascending: false,
-        }).limit(1).maybeSingle();
-      if (!recovery || recovery.attempt_count >= 5) {
-        return json(origin, { error: "Código inválido ou expirado." }, 400);
-      }
-      const suppliedHash = await secretHash(`${appointment.id}:${code}`);
-      if (suppliedHash !== recovery.code_hash) {
-        await admin.from("booking_recovery_codes").update({
-          attempt_count: recovery.attempt_count + 1,
-        }).eq("id", recovery.id);
-        return json(origin, { error: "Código inválido ou expirado." }, 400);
-      }
-
       const token = randomToken();
+      const manageUrl = `${SITE_URL}/manage-booking.html#token=${token}`;
+      const usedAt = new Date().toISOString();
       await Promise.all([
         admin.from("appointments").update({
           manage_token_hash: await secretHash(token),
         }).eq("id", appointment.id),
         admin.from("booking_recovery_codes").update({
-          used_at: new Date().toISOString(),
-        }).eq("id", recovery.id),
+          used_at: usedAt,
+        }).eq("appointment_id", appointment.id).is("used_at", null),
       ]);
+      let emailDelivered = true;
+      try {
+        await sendEmail(
+          appointment.customer_email,
+          "Novo link de acesso — Studio B",
+          recoveredAccessEmail(
+            appointment.customer_name,
+            appointment.services?.name || "Atendimento",
+            new Date(appointment.starts_at),
+            settings.timezone,
+            manageUrl,
+          ),
+        );
+      } catch (emailError) {
+        emailDelivered = false;
+        console.error("Recovered access email failed", emailError);
+      }
       return json(origin, {
         success: true,
-        manage_url: `${SITE_URL}/manage-booking.html#token=${token}`,
+        manage_url: manageUrl,
+        email_delivered: emailDelivered,
       });
     }
 

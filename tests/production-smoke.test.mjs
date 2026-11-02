@@ -58,6 +58,10 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-package-form/);
   assert.match(adminHtml, /data-packages-list/);
   assert.match(await manage.text(), /data-reschedule-form/);
+  const manageHtml = await (await fetch(`${baseUrl}/manage-booking.html?v=${stamp + 2}`)).text();
+  assert.match(manageHtml, /data-cancel-confirm/);
+  assert.match(manageHtml, /data-resend-confirmation/);
+  assert.doesNotMatch(manageHtml, /name="time"/);
   assert.match(await servicesFaq.text(), /FAQ de Serviços e valores/);
   assert.match(await scheduleFaq.text(), /Intervalo não é preparação/);
   assert.match(await robots.text(), /sitemap\.xml/i);
@@ -115,6 +119,28 @@ test("reagendamento rejeita link inválido sem alterar dados", { skip: !run }, a
     })
   });
   assert.equal(response.status, 404);
+});
+
+test("reenvio de confirmação rejeita link inválido sem enviar e-mail", { skip: !run }, async () => {
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: key, Origin: baseUrl },
+    body: JSON.stringify({ action: "resend-confirmation", token: "invalido" })
+  });
+  assert.equal(response.status, 400);
+});
+
+test("controle de reenvio não pode ser acionado pelo navegador", { skip: !run }, async () => {
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/claim_appointment_confirmation_resend`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: key,
+      Authorization: `Bearer ${key}`
+    },
+    body: JSON.stringify({ p_appointment_id: "00000000-0000-4000-8000-000000000000" })
+  });
+  assert.ok([401, 403, 404].includes(response.status));
 });
 
 test("bloqueios não podem ser consultados anonimamente", { skip: !run }, async () => {

@@ -10,6 +10,7 @@ const codeForm = document.querySelector("[data-code-form]");
 const rescheduleForm = document.querySelector("[data-reschedule-form]");
 const rescheduleSlots = document.querySelector("[data-reschedule-slots]");
 const rescheduledPanel = document.querySelector("[data-rescheduled]");
+const cancelConfirmForm = document.querySelector("[data-cancel-confirm]");
 let token = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("token") || "";
 let recoveryData = null;
 let config = null;
@@ -63,11 +64,14 @@ const renderAppointment = (appointment) => {
     ? `<br>${escapeHTML(appointment.selected_option_label)}${optionValue ? ` — ${escapeHTML(optionValue)}` : ""}`
     : "";
   details.innerHTML = `<strong>${escapeHTML(appointment.service_name)}</strong>${option}<br>${escapeHTML(appointment.date_label)}<br>${escapeHTML(appointment.time_label)}<br>Status: ${escapeHTML(statusLabel)}`;
+  const cancelDetails = document.querySelector("[data-cancel-details]");
+  if (cancelDetails) cancelDetails.innerHTML = details.innerHTML;
   appointmentPanel.hidden = false;
   recoveryPanel.hidden = true;
-  const cancelButton = document.querySelector("[data-cancel]");
+  const cancelButton = document.querySelector("[data-open-cancel]");
   cancelButton.hidden = appointment.status === "cancelled";
   document.querySelector("[data-open-reschedule]").hidden = appointment.status === "cancelled";
+  document.querySelector("[data-resend-confirmation]").hidden = appointment.status === "cancelled";
 };
 
 const loadAppointment = async () => {
@@ -88,16 +92,53 @@ const loadAppointment = async () => {
   }
 };
 
-document.querySelector("[data-cancel]")?.addEventListener("click", async (event) => {
-  if (!window.confirm("Deseja realmente cancelar este agendamento?")) return;
+document.querySelector("[data-open-cancel]")?.addEventListener("click", () => {
+  appointmentPanel.hidden = true;
+  cancelConfirmForm.hidden = false;
+  cancelConfirmForm.elements.understood.checked = false;
+  cancelConfirmForm.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+document.querySelector("[data-close-cancel]")?.addEventListener("click", () => {
+  cancelConfirmForm.hidden = true;
+  appointmentPanel.hidden = false;
+  showStatus();
+});
+
+cancelConfirmForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  setBusy(button, true);
+  showStatus();
+  try {
+    const result = await api("cancel", { token });
+    cancelConfirmForm.hidden = true;
+    appointmentPanel.hidden = true;
+    cancelledPanel.hidden = false;
+    const messages = ["O horário foi liberado."];
+    messages.push(result.email_delivered === false
+      ? "A confirmação por e-mail não pôde ser enviada; o cancelamento continua válido."
+      : "A confirmação foi enviada para seu e-mail.");
+    if (result.calendar_updated === false) {
+      messages.push("O evento pode continuar visível na sua agenda, mas o atendimento está cancelado no Studio B.");
+    }
+    document.querySelector("[data-cancelled-copy]").textContent = messages.join(" ");
+    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+    token = "";
+  } catch (error) {
+    showStatus(error.message);
+  } finally {
+    setBusy(button, false);
+  }
+});
+
+document.querySelector("[data-resend-confirmation]")?.addEventListener("click", async (event) => {
   const button = event.currentTarget;
   setBusy(button, true);
   showStatus();
   try {
-    await api("cancel", { token });
-    appointmentPanel.hidden = true;
-    cancelledPanel.hidden = false;
-    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+    const result = await api("resend-confirmation", { token });
+    showStatus(result.message);
   } catch (error) {
     showStatus(error.message);
   } finally {
@@ -179,10 +220,8 @@ rescheduleForm?.addEventListener("submit", async (event) => {
   }
 });
 
-recoveryForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const button = event.submitter;
-  recoveryData = Object.fromEntries(new FormData(recoveryForm));
+const requestRecoveryCode = async (button, { refreshData = false } = {}) => {
+  if (refreshData) recoveryData = Object.fromEntries(new FormData(recoveryForm));
   setBusy(button, true);
   showStatus();
   try {
@@ -195,6 +234,24 @@ recoveryForm?.addEventListener("submit", async (event) => {
   } finally {
     setBusy(button, false);
   }
+};
+
+recoveryForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await requestRecoveryCode(event.submitter, { refreshData: true });
+});
+
+document.querySelector("[data-recovery-back]")?.addEventListener("click", () => {
+  codeForm.hidden = true;
+  recoveryForm.hidden = false;
+  codeForm.reset();
+  showStatus();
+});
+
+document.querySelector("[data-resend-code]")?.addEventListener("click", async (event) => {
+  if (!recoveryData) return;
+  codeForm.reset();
+  await requestRecoveryCode(event.currentTarget);
 });
 
 codeForm?.addEventListener("submit", async (event) => {
@@ -204,7 +261,14 @@ codeForm?.addEventListener("submit", async (event) => {
   showStatus();
   try {
     const result = await api("recovery-confirm", { ...recoveryData, code: new FormData(codeForm).get("code") });
-    window.location.assign(result.manage_url);
+    token = new URL(result.manage_url).hash.replace(/^#token=/, "");
+    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}#token=${encodeURIComponent(token)}`);
+    codeForm.hidden = true;
+    recoveryPanel.hidden = true;
+    await loadAppointment();
+    showStatus(result.email_delivered
+      ? "Acesso recuperado. Também enviamos seu novo link por e-mail."
+      : "Acesso recuperado. Guarde o link desta página para retornar depois.");
   } catch (error) {
     showStatus(error.message);
   } finally {

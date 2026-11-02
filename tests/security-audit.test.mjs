@@ -26,7 +26,8 @@ test("tokens de gerenciamento são armazenados somente como hash", () => {
 });
 
 test("códigos de recuperação têm expiração e limite de tentativas", () => {
-  assert.match(api, /recovery\.attempt_count >= 5/);
+  assert.match(api, /\.lt\("attempt_count", 5\)/);
+  assert.match(api, /attempt_count: Number\(recovery\.attempt_count\) \+ 1/);
   assert.match(api, /expires_at/);
   assert.match(api, /\(count \|\| 0\) >= 3/);
 });

@@ -99,6 +99,13 @@ input:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgb
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
 [data-recovery-form] .button, [data-code-form] .button { margin-top: 1.4rem; }
 .manage-actions { display: flex; flex-wrap: wrap; gap: .8rem; }
+.button-link { display: inline-grid; place-items: center; text-decoration: none; }
+.cancel-confirm-form { margin-top: 0; }
+.cancel-confirm-form h2 { margin-bottom: .6rem; }
+.cancel-confirm-form .appointment-details { margin-top: 1rem; }
+.text-button { margin-top: 1rem; padding: .3rem 0; border: 0; border-bottom: 1px solid var(--gold); background: transparent; color: var(--petrol); font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.text-button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.recovery-code-actions { margin-top: 1rem; }
 .reschedule-form { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
 .reschedule-form h2 { font-size: clamp(2rem, 4vw, 3rem); }
 .reschedule-form .slots { grid-template-columns: repeat(4, 1fr); }
