@@ -9,6 +9,7 @@ const dateInput = form?.elements.date;
 const startsAtInput = form?.elements.starts_at;
 const slotsContainer = document.querySelector("[data-slots]");
 const availableDatesContainer = document.querySelector("[data-available-dates]");
+const bookingOptionsContainer = document.querySelector("[data-booking-options]");
 const selectedDateCopy = document.querySelector("[data-selected-date]");
 const summary = document.querySelector("[data-summary]");
 let config = null;
@@ -48,6 +49,44 @@ const showStep = (step) => {
 };
 
 const selectedService = () => config?.services.find((service) => service.id === serviceSelect.value);
+const selectedOption = () => selectedService()?.price_options?.find((option) =>
+  option.id === form.elements.service_price_id?.value
+);
+
+const formatMoney = (value) => new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL"
+}).format(Number(value));
+
+const optionValue = (option) => option.price_amount !== null && option.price_amount !== undefined
+  ? formatMoney(option.price_amount)
+  : option.custom_value || "Consulte";
+
+const renderBookingOptions = () => {
+  const service = selectedService();
+  if (!service) {
+    bookingOptionsContainer.innerHTML = '<p class="empty-state">Escolha um serviço para ver as opções de sessão e pacote.</p>';
+    return;
+  }
+  if (!service.price_options?.length) {
+    bookingOptionsContainer.innerHTML = '<p class="empty-state">Este serviço ainda não possui opções disponíveis.</p>';
+    return;
+  }
+  bookingOptionsContainer.innerHTML = `
+    <p class="booking-options-title">Escolha sessão ou pacote</p>
+    <div class="choice-grid booking-option-grid">
+      ${service.price_options.map((option) => `
+        <label class="choice booking-option">
+          <input type="radio" name="service_price_id" value="${escapeHTML(option.id)}" required />
+          <span>
+            <strong>${escapeHTML(option.label)}</strong>
+            <span class="booking-option-value">${option.is_promotional && option.original_price ? `<s>${escapeHTML(formatMoney(option.original_price))}</s> ` : ""}${escapeHTML(optionValue(option))}</span>
+          </span>
+        </label>
+      `).join("")}
+    </div>
+  `;
+};
 
 const formatAvailableDate = (dateValue, options) => new Intl.DateTimeFormat("pt-BR", {
   timeZone: "UTC",
@@ -141,7 +180,10 @@ availableDatesContainer?.addEventListener("click", async (event) => {
   await loadSlots();
 });
 
-serviceSelect?.addEventListener("change", loadAvailableDates);
+serviceSelect?.addEventListener("change", async () => {
+  renderBookingOptions();
+  await loadAvailableDates();
+});
 
 form?.addEventListener("click", (event) => {
   const next = event.target.closest("[data-next]");
@@ -152,8 +194,12 @@ form?.addEventListener("click", (event) => {
   if (!validateStep(current)) return;
   if (Number(next.dataset.next) === 4) {
     const service = selectedService();
+    const option = selectedOption();
     const start = new Date(startsAtInput.value);
-    summary.innerHTML = `<strong>${escapeHTML(service.name)}</strong><br>${escapeHTML(new Intl.DateTimeFormat("pt-BR", { timeZone: config.timezone, dateStyle: "full", timeStyle: "short" }).format(start))}<br>${Number(service.duration_minutes)} minutos`;
+    const packageNote = /pacote/i.test(option?.label || "")
+      ? '<p class="package-selection-note">Este agendamento reserva a primeira sessão. A contratação e as condições do pacote serão confirmadas pelo Studio B.</p>'
+      : "";
+    summary.innerHTML = `<strong>${escapeHTML(service.name)}</strong><br>${escapeHTML(option.label)} — ${escapeHTML(optionValue(option))}<br>${escapeHTML(new Intl.DateTimeFormat("pt-BR", { timeZone: config.timezone, dateStyle: "full", timeStyle: "short" }).format(start))}<br>${Number(service.duration_minutes)} minutos${packageNote}`;
   }
   showStep(Number(next.dataset.next));
 });
@@ -171,6 +217,7 @@ form?.addEventListener("submit", async (event) => {
       phone: data.get("phone"),
       email: data.get("email"),
       service_id: data.get("service_id"),
+      service_price_id: data.get("service_price_id"),
       starts_at: data.get("starts_at"),
       sync_calendar: data.get("sync_calendar") === "yes"
     });
@@ -201,6 +248,7 @@ const init = async () => {
     if (requestedService && config.services.some((service) => service.id === requestedService)) serviceSelect.value = requestedService;
     form.hidden = false;
     showStep(1);
+    renderBookingOptions();
     if (serviceSelect.value) await loadAvailableDates();
   } catch (error) {
     loading.hidden = true;

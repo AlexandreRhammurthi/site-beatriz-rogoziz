@@ -13,9 +13,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="booking.css?v=4" />
+    <link rel="stylesheet" href="booking.css?v=5" />
     <script src="supabase-config.js?v=2" defer></script>
-    <script src="booking.js?v=2" defer></script>
+    <script src="booking.js?v=3" defer></script>
   </head>
   <body>
     <header class="booking-header">
@@ -52,6 +52,9 @@
               <legend>Escolha o cuidado e veja as datas disponíveis</legend>
               <p class="field-help">Você só precisará informar seus dados depois de escolher um horário.</p>
               <label>Serviço<select name="service_id" required><option value="">Selecione</option></select></label>
+              <div class="booking-options" data-booking-options aria-live="polite">
+                <p class="empty-state">Escolha um serviço para ver as opções de sessão e pacote.</p>
+              </div>
               <div class="available-dates" data-available-dates aria-live="polite">
                 <p class="empty-state">Escolha um serviço para consultar as próximas datas disponíveis.</p>
               </div>

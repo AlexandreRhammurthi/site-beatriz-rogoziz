@@ -27,6 +27,10 @@ const packagesSummary = document.querySelector("[data-packages-summary]");
 const packagesList = document.querySelector("[data-packages-list]");
 const historyFilter = document.querySelector("[data-history-filter]");
 const historyList = document.querySelector("[data-history-list]");
+const operationsMetrics = document.querySelector("[data-operations-metrics]");
+const operationsUpcoming = document.querySelector("[data-operations-upcoming]");
+const operationsDemand = document.querySelector("[data-operations-demand]");
+const operationsAlerts = document.querySelector("[data-operations-alerts]");
 const adminUtils = window.STUDIO_B_ADMIN_UTILS;
 const weekdayLabels = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 
@@ -75,11 +79,14 @@ const auditFieldLabels = {
   pause_end_time: "Fim da pausa", starts_at: "Início", ends_at: "Fim", reason: "Motivo",
   attendance_status: "Comparecimento", admin_notes: "Observações", customer_name: "Cliente",
   package_label: "Pacote", total_sessions: "Sessões contratadas", purchased_on: "Compra", expires_on: "Validade",
-  session_date: "Data da sessão", notes: "Observações"
+  session_date: "Data da sessão", notes: "Observações",
+  selected_option_label: "Opção escolhida", selected_option_price_amount: "Valor escolhido",
+  selected_option_custom_value: "Texto do valor", selected_option_original_price: "Valor anterior",
+  selected_option_is_promotional: "Valor promocional"
 };
 
 const hiddenAuditFields = new Set([
-  "id", "service_id", "package_id", "appointment_id", "client_package_id", "created_at", "updated_at",
+  "id", "service_id", "service_price_id", "package_id", "appointment_id", "client_package_id", "created_at", "updated_at",
   "manage_token_hash", "google_event_id", "reminder_attempted_at", "reminder_sent_at"
 ]);
 
@@ -291,6 +298,7 @@ const appointmentMarkup = (appointment) => {
   const syncLabel = appointment.calendar_sync_requested ? "Convite de agenda solicitado" : "Sem convite de agenda";
   const sourceLabel = appointment.booking_source === "admin" ? "Lançamento administrativo" : "Agendamento online";
   const packageLabel = appointment.client_packages?.package_label || "";
+  const optionLabel = appointment.selected_option_label || "";
   return `
     <article class="appointment-card ${escapeHTML(appointment.status)}">
       <div>
@@ -298,6 +306,7 @@ const appointmentMarkup = (appointment) => {
         <h3>${escapeHTML(serviceName)}</h3>
         <span class="appointment-source">${escapeHTML(sourceLabel)}</span>
         ${packageLabel ? `<span class="appointment-source">Pacote: ${escapeHTML(packageLabel)}</span>` : ""}
+        ${optionLabel ? `<span class="appointment-source">Opção: ${escapeHTML(optionLabel)}</span>` : ""}
       </div>
       <div class="appointment-customer">
         <strong>${escapeHTML(appointment.customer_name)}</strong>
@@ -354,7 +363,7 @@ const loadAppointments = async () => {
   const end = adminUtils.zonedTimeToUtc(adminUtils.addDays(endDate, 1), "00:00:00");
   let query = client
     .from("appointments")
-    .select("id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, attendance_status, admin_notes, calendar_sync_requested, booking_source, client_package_id, services(name), client_packages(package_label)")
+    .select("id, customer_name, customer_email, customer_phone, starts_at, ends_at, status, attendance_status, admin_notes, calendar_sync_requested, booking_source, client_package_id, selected_option_label, selected_option_price_amount, selected_option_custom_value, selected_option_is_promotional, services(name), client_packages(package_label)")
     .gte("starts_at", start.toISOString())
     .lt("starts_at", end.toISOString())
     .order("starts_at")
@@ -621,6 +630,7 @@ const resetManualBookingForm = () => {
   manualBookingSummary.hidden = true;
   manualBookingSummary.innerHTML = "";
   manualBookingForm.elements.client_package_id.innerHTML = '<option value="">Não vincular a pacote</option>';
+  refreshManualPriceOptions();
 };
 
 const refreshManualPackageOptions = () => {
@@ -635,6 +645,23 @@ const refreshManualPackageOptions = () => {
     const stats = packageStats(item);
     return `<option value="${escapeHTML(item.id)}">${escapeHTML(item.customer_name)} — ${escapeHTML(item.package_label)} (${stats.remaining} restantes)</option>`;
   }).join("");
+};
+
+const refreshManualPriceOptions = () => {
+  const service = manualBookingConfig?.services.find((item) =>
+    item.id === manualBookingForm?.elements.service_id.value
+  );
+  const select = manualBookingForm?.elements.service_price_id;
+  if (!select) return;
+  select.disabled = false;
+  select.required = true;
+  select.innerHTML = '<option value="">Selecione</option>' + (service?.price_options || [])
+    .map((option) => {
+      const value = option.price_amount !== null && option.price_amount !== undefined
+        ? formatPackageMoney(option.price_amount)
+        : option.custom_value || "Consulte";
+      return `<option value="${escapeHTML(option.id)}">${escapeHTML(option.label)} — ${escapeHTML(value)}</option>`;
+    }).join("");
 };
 
 const loadManualBookingForm = async () => {
@@ -680,24 +707,32 @@ const loadManualBookingSlots = async () => {
 const updateManualBookingSummary = (slot) => {
   const service = manualBookingConfig?.services.find((item) => item.id === manualBookingForm.elements.service_id.value);
   if (!service || !slot) return;
+  const option = service.price_options?.find((item) => item.id === manualBookingForm.elements.service_price_id.value);
+  const linkedPackage = manualBookingPackages.find((item) => item.id === manualBookingForm.elements.client_package_id.value);
   const start = new Date(slot.dataset.manualStart);
   const label = new Intl.DateTimeFormat("pt-BR", {
     timeZone: manualBookingConfig.timezone,
     dateStyle: "full",
     timeStyle: "short"
   }).format(start);
-  manualBookingSummary.innerHTML = `<strong>${escapeHTML(service.name)}</strong><br>${escapeHTML(label)}<br>${Number(service.duration_minutes)} minutos`;
+  const optionLabel = linkedPackage?.package_label || option?.label;
+  manualBookingSummary.innerHTML = `<strong>${escapeHTML(service.name)}</strong>${optionLabel ? `<br>${escapeHTML(optionLabel)}` : ""}<br>${escapeHTML(label)}<br>${Number(service.duration_minutes)} minutos`;
   manualBookingSummary.hidden = false;
 };
 
 manualBookingForm?.elements.service_id.addEventListener("change", async () => {
+  refreshManualPriceOptions();
   refreshManualPackageOptions();
   await loadManualBookingSlots();
 });
 manualBookingForm?.elements.date.addEventListener("change", loadManualBookingSlots);
 manualBookingForm?.elements.client_package_id.addEventListener("change", () => {
   const selected = manualBookingPackages.find((item) => item.id === manualBookingForm.elements.client_package_id.value);
+  const priceSelect = manualBookingForm.elements.service_price_id;
+  priceSelect.disabled = Boolean(selected);
+  priceSelect.required = !selected;
   if (!selected) return;
+  priceSelect.value = "";
   manualBookingForm.elements.name.value = selected.customer_name;
   manualBookingForm.elements.phone.value = adminUtils.formatPhone(selected.customer_phone);
   manualBookingForm.elements.email.value = selected.customer_email;
@@ -728,6 +763,7 @@ manualBookingForm?.addEventListener("submit", async (event) => {
       phone: String(values.get("phone") || "").trim(),
       email: String(values.get("email") || "").trim(),
       service_id: String(values.get("service_id") || ""),
+      service_price_id: String(values.get("service_price_id") || "") || null,
       client_package_id: String(values.get("client_package_id") || "") || null,
       starts_at: startsAt,
       sync_calendar: values.get("sync_calendar") === "on",
@@ -748,6 +784,7 @@ manualBookingForm?.addEventListener("submit", async (event) => {
     manualBookingSuccess.hidden = false;
     loadedAdminViews.delete("appointments");
     loadedAdminViews.delete("packages");
+    loadedAdminViews.delete("operations-dashboard");
     appointmentsCache = [];
     showStatus("Agendamento registrado com sucesso.");
   } catch (error) {
@@ -859,9 +896,91 @@ const loadHistory = async () => {
   renderHistory();
 };
 
+const loadOperationsDashboard = async () => {
+  if (!operationsMetrics || !adminUtils) return;
+  operationsMetrics.innerHTML = '<p class="appointments-empty">Calculando indicadores…</p>';
+  const today = packageToday();
+  const start = adminUtils.zonedTimeToUtc(adminUtils.addDays(today, -30), "00:00:00");
+  const end = adminUtils.zonedTimeToUtc(adminUtils.addDays(today, 91), "00:00:00");
+  const [appointmentsResult, packagesResult] = await Promise.all([
+    client.from("appointments")
+      .select("id, customer_name, starts_at, ends_at, status, attendance_status, selected_option_label, services(name)")
+      .gte("starts_at", start.toISOString()).lt("starts_at", end.toISOString()).order("starts_at"),
+    client.from("client_packages")
+      .select("id, customer_name, package_label, total_sessions, expires_on, services(name), package_sessions(id, session_date, attendance_status)")
+  ]);
+  if (appointmentsResult.error) throw appointmentsResult.error;
+  if (packagesResult.error) throw packagesResult.error;
+
+  const appointments = appointmentsResult.data || [];
+  const packages = packagesResult.data || [];
+  const todayStart = adminUtils.zonedTimeToUtc(today, "00:00:00");
+  const tomorrowStart = adminUtils.zonedTimeToUtc(adminUtils.addDays(today, 1), "00:00:00");
+  const nextWeek = adminUtils.zonedTimeToUtc(adminUtils.addDays(today, 7), "00:00:00");
+  const nextMonth = adminUtils.zonedTimeToUtc(adminUtils.addDays(today, 31), "00:00:00");
+  const pastMonth = adminUtils.zonedTimeToUtc(adminUtils.addDays(today, -30), "00:00:00");
+  const active = appointments.filter((item) => item.status !== "cancelled");
+  const between = (item, from, to) => {
+    const value = new Date(item.starts_at);
+    return value >= from && value < to;
+  };
+  const todayCount = active.filter((item) => between(item, todayStart, tomorrowStart)).length;
+  const nextSevenCount = active.filter((item) => between(item, todayStart, nextWeek)).length;
+  const recent = appointments.filter((item) => between(item, pastMonth, tomorrowStart));
+  const completedCount = recent.filter((item) => item.attendance_status === "completed").length;
+  const cancelledCount = recent.filter((item) => item.status === "cancelled").length;
+  const noShowCount = recent.filter((item) => item.attendance_status === "no_show").length;
+  const incidentRate = recent.length ? Math.round(((cancelledCount + noShowCount) / recent.length) * 100) : 0;
+
+  operationsMetrics.innerHTML = `
+    <article><span>Hoje</span><strong>${todayCount}</strong><small>atendimentos ativos</small></article>
+    <article><span>Próximos 7 dias</span><strong>${nextSevenCount}</strong><small>atendimentos ativos</small></article>
+    <article><span>Últimos 30 dias</span><strong>${completedCount}</strong><small>sessões concluídas</small></article>
+    <article><span>Cancelamentos + faltas</span><strong>${incidentRate}%</strong><small>${cancelledCount} cancelados e ${noShowCount} faltas</small></article>
+  `;
+
+  const upcoming = active.filter((item) => new Date(item.starts_at) >= new Date()).slice(0, 6);
+  operationsUpcoming.innerHTML = upcoming.length ? upcoming.map((item) => `
+    <article class="operations-list-item">
+      <span>${escapeHTML(adminUtils.formatAppointmentDate(item.starts_at, item.ends_at))}</span>
+      <strong>${escapeHTML(item.customer_name)}</strong>
+      <small>${escapeHTML(item.services?.name || "Serviço removido")}${item.selected_option_label ? ` · ${escapeHTML(item.selected_option_label)}` : ""}</small>
+    </article>`).join("") : '<p class="appointments-empty">Nenhum atendimento futuro.</p>';
+
+  const demand = new Map();
+  active.filter((item) => between(item, todayStart, nextMonth)).forEach((item) => {
+    const name = item.services?.name || "Serviço removido";
+    demand.set(name, (demand.get(name) || 0) + 1);
+  });
+  const demandRows = [...demand.entries()].sort((a, b) => b[1] - a[1]);
+  const demandMax = Math.max(...demandRows.map(([, count]) => count), 1);
+  operationsDemand.innerHTML = demandRows.length ? demandRows.map(([name, count]) => `
+    <div class="demand-row"><span><strong>${escapeHTML(name)}</strong><small>${count} agendamento${count === 1 ? "" : "s"}</small></span><i><b style="width:${Math.round((count / demandMax) * 100)}%"></b></i></div>
+  `).join("") : '<p class="appointments-empty">Ainda não há demanda no período.</p>';
+
+  const alertLimit = adminUtils.addDays(today, 30);
+  const alerts = packages.map((item) => ({ item, stats: packageStats(item) }))
+    .filter(({ item, stats }) => stats.status === "active" && stats.remaining > 0 && (
+      (item.expires_on && item.expires_on <= alertLimit) || !stats.next
+    ))
+    .sort((a, b) => String(a.item.expires_on || "9999").localeCompare(String(b.item.expires_on || "9999")))
+    .slice(0, 8);
+  operationsAlerts.innerHTML = alerts.length ? alerts.map(({ item, stats }) => `
+    <article class="operations-list-item operations-alert">
+      <strong>${escapeHTML(item.customer_name)}</strong>
+      <span>${escapeHTML(item.package_label)} · ${stats.remaining} sessão${stats.remaining === 1 ? "" : "ões"} restante${stats.remaining === 1 ? "" : "s"}</span>
+      <small>${item.expires_on && item.expires_on <= alertLimit ? `Validade: ${escapeHTML(formatPackageDate(item.expires_on))}` : "Sem próxima sessão agendada"}</small>
+    </article>`).join("") : '<p class="appointments-empty">Nenhum pacote exige atenção agora.</p>';
+};
+
 const loadAdminView = async (view) => {
   if (view === "history") {
     await loadHistory();
+    loadedAdminViews.add(view);
+    return;
+  }
+  if (view === "operations-dashboard") {
+    await loadOperationsDashboard();
     loadedAdminViews.add(view);
     return;
   }
@@ -1231,16 +1350,31 @@ appointmentsList?.addEventListener("submit", async (event) => {
   const appointment = appointmentsCache.find((item) => item.id === form.dataset.appointmentId);
   if (appointment) Object.assign(appointment, update);
   loadedAdminViews.delete("packages");
+  loadedAdminViews.delete("operations-dashboard");
   renderAppointments();
   showStatus("Acompanhamento salvo.");
 });
 
+document.querySelector("[data-refresh-operations]")?.addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  setBusy(button, true);
+  try {
+    await loadOperationsDashboard();
+    showStatus("Indicadores atualizados.");
+  } catch (error) {
+    showStatus(error.message || "Não foi possível atualizar os indicadores.", true);
+  } finally {
+    setBusy(button, false);
+  }
+});
+
 document.querySelector("[data-export-appointments]")?.addEventListener("click", () => {
   if (!appointmentsCache.length) return showStatus("Não há agendamentos carregados para exportar.", true);
-  const header = ["Data e horário", "Serviço", "Pacote", "Cliente", "E-mail", "WhatsApp", "Origem", "Status", "Comparecimento", "Convite de agenda", "Observações privadas"];
+  const header = ["Data e horário", "Serviço", "Opção escolhida", "Pacote contratado", "Cliente", "E-mail", "WhatsApp", "Origem", "Status", "Comparecimento", "Convite de agenda", "Observações privadas"];
   const rows = appointmentsCache.map((appointment) => [
     adminUtils.formatAppointmentDate(appointment.starts_at, appointment.ends_at),
     appointment.services?.name || "Serviço removido",
+    appointment.selected_option_label || "",
     appointment.client_packages?.package_label || "",
     appointment.customer_name,
     appointment.customer_email,

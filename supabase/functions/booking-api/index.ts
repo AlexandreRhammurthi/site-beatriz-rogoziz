@@ -537,10 +537,13 @@ const createGoogleEvent = async (
     location: STUDIO_ADDRESS,
     description: [
       `Atendimento no Studio B com Beatriz Rogoziz.`,
+      appointment.selected_option_label
+        ? `Opção: ${appointment.selected_option_label}`
+        : null,
       `Cliente: ${appointment.customer_name}`,
       `WhatsApp: ${appointment.customer_phone}`,
       `Gerenciar ou cancelar: ${manageUrl}`,
-    ].join("\n"),
+    ].filter(Boolean).join("\n"),
     start: { dateTime: appointment.starts_at, timeZone: timezone },
     end: { dateTime: appointment.ends_at, timeZone: timezone },
     attendees: sendInvite ? [{ email: appointment.customer_email }] : [],
@@ -684,6 +687,11 @@ const formatAppointment = (
     ends_at: appointment.ends_at,
     status: appointment.status,
     calendar_sync_requested: appointment.calendar_sync_requested,
+    selected_option_label: appointment.selected_option_label,
+    selected_option_price_amount: appointment.selected_option_price_amount,
+    selected_option_custom_value: appointment.selected_option_custom_value,
+    selected_option_original_price: appointment.selected_option_original_price,
+    selected_option_is_promotional: appointment.selected_option_is_promotional,
     date_label: new Intl.DateTimeFormat("pt-BR", {
       timeZone: timezone,
       dateStyle: "long",
@@ -699,6 +707,8 @@ const formatAppointment = (
 const confirmationEmail = (
   name: string,
   service: string,
+  optionLabel: string | null,
+  optionValue: string | null,
   start: Date,
   timezone: string,
   manageUrl: string,
@@ -707,7 +717,11 @@ const confirmationEmail = (
   <div style="font-family:Arial,sans-serif;color:#143434;line-height:1.6;max-width:620px;margin:auto">
     <h1 style="font-family:Georgia,serif;font-weight:normal;color:#0b3b3c">Agendamento confirmado</h1>
     <p>Olá, ${html(name)}. Seu cuidado no Studio B foi reservado.</p>
-    <p><strong>${html(service)}</strong><br>${
+    <p><strong>${html(service)}</strong>${
+  optionLabel
+    ? `<br>${html(optionLabel)}${optionValue ? ` — ${html(optionValue)}` : ""}`
+    : ""
+}<br>${
   html(
     new Intl.DateTimeFormat("pt-BR", {
       timeZone: timezone,
@@ -783,17 +797,29 @@ Deno.serve(async (request) => {
       integrationsConfigured();
 
     if (action === "config" || action === "admin-config") {
-      const { data: services, error } = await admin
-        .from("services")
-        .select("id, name, subtitle, duration_minutes, sort_order")
-        .eq("is_active", true)
-        .order("sort_order");
-      if (error) throw error;
+      const [servicesResult, pricesResult] = await Promise.all([
+        admin.from("services")
+          .select("id, name, subtitle, duration_minutes, sort_order")
+          .eq("is_active", true)
+          .order("sort_order"),
+        admin.from("service_prices")
+          .select("id, service_id, label, price_amount, custom_value, is_promotional, original_price, sort_order")
+          .eq("is_active", true)
+          .order("sort_order"),
+      ]);
+      if (servicesResult.error) throw servicesResult.error;
+      if (pricesResult.error) throw pricesResult.error;
+      const services = (servicesResult.data || []).map((service) => ({
+        ...service,
+        price_options: (pricesResult.data || []).filter((price) =>
+          price.service_id === service.id
+        ),
+      }));
       return json(origin, {
         enabled: adminAction ? integrationsConfigured() : effectiveEnabled,
         timezone: settings.timezone,
         booking_horizon_days: settings.booking_horizon_days,
-        services: services || [],
+        services,
       });
     }
 
@@ -868,13 +894,33 @@ Deno.serve(async (request) => {
       }
 
       let clientPackageId: string | null = null;
+      let selectedOption: Record<string, unknown> | null = null;
+      if (payload.service_price_id) {
+        if (!isUuid(payload.service_price_id)) {
+          return json(origin, { error: "Opção de atendimento inválida." }, 400);
+        }
+        const { data: priceOption, error: priceError } = await admin
+          .from("service_prices")
+          .select("id, service_id, label, price_amount, custom_value, is_promotional, original_price")
+          .eq("id", payload.service_price_id)
+          .eq("service_id", payload.service_id)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (priceError) throw priceError;
+        if (!priceOption) {
+          return json(origin, {
+            error: "Esta sessão ou pacote não está mais disponível.",
+          }, 409);
+        }
+        selectedOption = priceOption;
+      }
       if (isAdminCreate && payload.client_package_id) {
         if (!isUuid(payload.client_package_id)) {
           return json(origin, { error: "Pacote inválido." }, 400);
         }
         const { data: clientPackage, error: packageError } = await admin
           .from("client_packages")
-          .select("id, service_id, total_sessions, expires_on")
+          .select("id, service_id, total_sessions, expires_on, package_label, price_amount")
           .eq("id", payload.client_package_id)
           .single();
         if (packageError || !clientPackage) {
@@ -899,6 +945,22 @@ Deno.serve(async (request) => {
           }, 409);
         }
         clientPackageId = clientPackage.id;
+        if (!selectedOption) {
+          selectedOption = {
+            id: null,
+            label: clientPackage.package_label,
+            price_amount: clientPackage.price_amount,
+            custom_value: null,
+            is_promotional: false,
+            original_price: null,
+          };
+        }
+      }
+
+      if (!selectedOption) {
+        return json(origin, {
+          error: "Escolha uma sessão avulsa ou pacote disponível.",
+        }, 400);
       }
 
       if (!isAdminCreate) {
@@ -933,6 +995,13 @@ Deno.serve(async (request) => {
         calendar_sync_requested: payload.sync_calendar === true,
         booking_source: isAdminCreate ? "admin" : "online",
         client_package_id: clientPackageId,
+        service_price_id: selectedOption.id,
+        selected_option_label: selectedOption.label,
+        selected_option_price_amount: selectedOption.price_amount,
+        selected_option_custom_value: selectedOption.custom_value,
+        selected_option_original_price: selectedOption.original_price,
+        selected_option_is_promotional:
+          selectedOption.is_promotional === true,
         manage_token_hash: tokenHash,
         status: "pending",
       };
@@ -977,6 +1046,14 @@ Deno.serve(async (request) => {
             confirmationEmail(
               name,
               availability.service.name,
+              String(selectedOption.label || "") || null,
+              selectedOption.price_amount !== null &&
+                  selectedOption.price_amount !== undefined
+                ? new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(Number(selectedOption.price_amount))
+                : String(selectedOption.custom_value || "") || null,
               startsAt,
               settings.timezone,
               manageUrl,
@@ -995,6 +1072,9 @@ Deno.serve(async (request) => {
           starts_at: selected.start,
           ends_at: selected.end,
           calendar_sync_requested: payload.sync_calendar === true,
+          selected_option_label: selectedOption.label,
+          selected_option_price_amount: selectedOption.price_amount,
+          selected_option_custom_value: selectedOption.custom_value,
         },
         manage_url: manageUrl,
         email_delivered: emailDelivered,

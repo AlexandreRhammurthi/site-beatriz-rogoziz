@@ -44,6 +44,8 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-admin-target="create-appointment"/);
   assert.match(adminHtml, /data-admin-target="packages"/);
   assert.match(adminHtml, /data-admin-target="history"/);
+  assert.match(adminHtml, /data-admin-target="operations-dashboard"/);
+  assert.match(adminHtml, /data-operations-metrics/);
   assert.match(adminHtml, /data-history-list/);
   assert.match(adminHtml, /href="admin-faq-servicos\.html"/);
   assert.match(adminHtml, /href="admin-faq-agenda\.html"/);
@@ -72,6 +74,7 @@ test("API pública de agendamento permanece operacional", { skip: !run }, async 
   const config = await response.json();
   assert.equal(config.enabled, true);
   assert.ok(Array.isArray(config.services) && config.services.length > 0);
+  assert.ok(config.services.every((service) => Array.isArray(service.price_options)));
 });
 
 test("API pública lista datas realmente disponíveis", { skip: !run }, async () => {

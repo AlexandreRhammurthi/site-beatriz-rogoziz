@@ -145,3 +145,5 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | 27/10/2026 | QA contínuo no GitHub | testes por alteração + smoke a cada 6 horas | publicado |
 | 01/11/2026 | Histórico administrativo e desfazer seguro | testes de contrato, RLS, conflito e dependências | publicado |
 | 01/11/2026 | SEO, cache público, performance e CSP | testes de metadados, cache e segurança | publicado |
+| 02/11/2026 | Escolha de sessão ou pacote no agendamento | contrato da API, snapshot comercial, fluxo público e administrativo | publicado |
+| 02/11/2026 | Dashboard operacional | agenda, demanda, comparecimento, alertas de pacotes e QA responsivo | publicado |

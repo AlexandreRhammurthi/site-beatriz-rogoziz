@@ -12,11 +12,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=15" />
+    <link rel="stylesheet" href="admin.css?v=16" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" integrity="sha384-UagCvVPT5XXA0Hx+nJYUAGBFseHT9zBgpJMSebsAxl9lciTwbT+39j5VfRjdP5Tp" crossorigin="anonymous" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
     <script src="admin-utils.js?v=4" defer></script>
-    <script src="admin.js?v=16" defer></script>
+    <script src="admin.js?v=17" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -134,6 +134,14 @@
               <span class="option-copy">
                 <strong>Histórico</strong>
                 <span>Consulte mudanças administrativas e desfaça com segurança uma alteração recente.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="admin-option-card" type="button" data-admin-target="operations-dashboard">
+              <span class="option-index" aria-hidden="true">05</span>
+              <span class="option-copy">
+                <strong>Visão operacional</strong>
+                <span>Acompanhe agenda, demanda, comparecimento e pacotes que precisam de atenção.</span>
               </span>
               <span class="option-arrow" aria-hidden="true">→</span>
             </button>
@@ -324,6 +332,7 @@
                 <label>WhatsApp<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999" required /></label>
                 <label>E-mail<input name="email" type="email" autocomplete="email" required /></label>
                 <label>Serviço<select name="service_id" required><option value="">Selecione</option></select></label>
+                <label>Opção de atendimento<select name="service_price_id" required><option value="">Selecione o serviço primeiro</option></select></label>
                 <label class="full">Usar pacote do cliente <span class="optional">(opcional)</span><select name="client_package_id"><option value="">Não vincular a pacote</option></select></label>
                 <label>Data<input name="date" type="date" required /></label>
               </div>
@@ -379,6 +388,30 @@
           </form>
           <div class="appointments-summary" data-appointments-summary aria-live="polite"></div>
           <div class="appointments-list" data-appointments-list aria-live="polite"></div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-admin-view="operations-dashboard" aria-labelledby="operations-title" hidden>
+          <div class="view-heading">
+            <button class="view-back" type="button" data-admin-target="home">← Voltar ao início</button>
+            <div>
+              <p class="eyebrow">Gestão diária</p>
+              <h1 id="operations-title" tabindex="-1">Visão operacional</h1>
+              <p>Indicadores de agenda, demanda e pacotes para apoiar as decisões do Studio B.</p>
+            </div>
+          </div>
+          <section class="booking-settings-card operations-card">
+            <div class="settings-heading">
+              <div><p class="eyebrow">Resumo</p><h2>Operação do Studio</h2><p>Dados atualizados diretamente da agenda e dos pacotes cadastrados.</p></div>
+              <button class="button secondary" type="button" data-refresh-operations>Atualizar</button>
+            </div>
+            <div class="operations-metrics" data-operations-metrics aria-live="polite"></div>
+            <div class="operations-grid">
+              <section class="operations-panel"><h3>Próximos atendimentos</h3><div data-operations-upcoming></div></section>
+              <section class="operations-panel"><h3>Demanda nos próximos 30 dias</h3><div data-operations-demand></div></section>
+              <section class="operations-panel operations-alert-panel"><h3>Pacotes que pedem atenção</h3><div data-operations-alerts></div></section>
+            </div>
+            <p class="operations-footnote">Os indicadores financeiros não são exibidos porque o painel ainda não registra pagamentos confirmados.</p>
           </section>
         </section>
 

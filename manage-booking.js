@@ -56,7 +56,13 @@ const brazilDate = (date) => {
 const renderAppointment = (appointment) => {
   currentAppointment = appointment;
   const statusLabel = appointment.status === "cancelled" ? "Cancelado" : "Confirmado";
-  details.innerHTML = `<strong>${escapeHTML(appointment.service_name)}</strong><br>${escapeHTML(appointment.date_label)}<br>${escapeHTML(appointment.time_label)}<br>Status: ${escapeHTML(statusLabel)}`;
+  const optionValue = appointment.selected_option_price_amount !== null && appointment.selected_option_price_amount !== undefined
+    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(appointment.selected_option_price_amount))
+    : appointment.selected_option_custom_value || "";
+  const option = appointment.selected_option_label
+    ? `<br>${escapeHTML(appointment.selected_option_label)}${optionValue ? ` — ${escapeHTML(optionValue)}` : ""}`
+    : "";
+  details.innerHTML = `<strong>${escapeHTML(appointment.service_name)}</strong>${option}<br>${escapeHTML(appointment.date_label)}<br>${escapeHTML(appointment.time_label)}<br>Status: ${escapeHTML(statusLabel)}`;
   appointmentPanel.hidden = false;
   recoveryPanel.hidden = true;
   const cancelButton = document.querySelector("[data-cancel]");

@@ -12,6 +12,37 @@
   --sans: "Manrope", Arial, sans-serif;
 }
 
+.operations-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin: 1.5rem 0 2rem; }
+.operations-metrics article { min-height: 145px; padding: 1.15rem; border: 1px solid rgba(14, 63, 62, .17); background: #f8f3e8; display: flex; flex-direction: column; justify-content: space-between; }
+.operations-metrics span { color: #64706e; font-size: .7rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
+.operations-metrics strong { color: var(--petrol); font-family: "Cormorant Garamond", serif; font-size: clamp(2.4rem, 4vw, 4rem); font-weight: 500; line-height: .9; }
+.operations-metrics small { color: #64706e; line-height: 1.4; }
+.operations-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.operations-panel { padding: 1.3rem; border: 1px solid rgba(14, 63, 62, .17); background: #fffdf8; }
+.operations-panel h3 { margin: 0 0 1rem; color: var(--petrol); font-family: "Cormorant Garamond", serif; font-size: 1.65rem; font-weight: 500; }
+.operations-alert-panel { grid-column: 1 / -1; }
+.operations-list-item { display: grid; gap: .2rem; padding: .85rem 0; border-bottom: 1px solid rgba(14, 63, 62, .12); }
+.operations-list-item:last-child { border-bottom: 0; }
+.operations-list-item span, .operations-list-item small { color: #64706e; font-size: .78rem; }
+.operations-list-item strong { color: var(--petrol); }
+.operations-alert small { color: #9b643d; font-weight: 600; }
+.demand-row { display: grid; gap: .45rem; margin: 0 0 1rem; }
+.demand-row > span { display: flex; justify-content: space-between; gap: 1rem; }
+.demand-row small { color: #64706e; }
+.demand-row i { height: 5px; background: #e7e1d4; overflow: hidden; }
+.demand-row b { display: block; height: 100%; background: var(--gold); }
+.operations-footnote { margin: 1.5rem 0 0; color: #64706e; font-size: .78rem; }
+
+@media (max-width: 900px) {
+  .operations-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .operations-grid { grid-template-columns: 1fr; }
+  .operations-alert-panel { grid-column: auto; }
+}
+
+@media (max-width: 560px) {
+  .operations-metrics { grid-template-columns: 1fr; }
+}
+
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 14px; }
 button, input, textarea { font: inherit; }
