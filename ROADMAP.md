@@ -1,6 +1,6 @@
 # Roadmap — Agenda Studio B
 
-Atualizado em 27 de outubro de 2026.
+Atualizado em 1º de novembro de 2026.
 
 Este roadmap organiza a evolução do agendamento sem cadastro, preservando a integração já ativa com Supabase, Google Agenda e Gmail. Cada entrega só é considerada concluída depois de testes automatizados, QA funcional e publicação.
 
@@ -105,6 +105,30 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 - Manter checklist de QA para desktop, celular, teclado e leitores de tela.
 - Registrar as entregas e evidências de publicação neste roadmap.
 
+## Fase 7 — Histórico administrativo e recuperação
+
+**Estado:** concluído
+
+- Registrar criações, alterações e exclusões feitas por administradores autenticados.
+- Identificar área, registro, responsável, data e campos alterados.
+- Permitir desfazer somente quando não houver mudança posterior no mesmo registro.
+- Bloquear reversões que removeriam serviços ou pacotes com dependências vinculadas.
+- Manter operações automáticas e dados públicos fora da trilha administrativa.
+
+**Testes:** captura administrativa, RLS, conflito posterior, dependências, filtros e interface responsiva.
+
+## Fase 8 — SEO, cache, performance e segurança web
+
+**Estado:** concluído
+
+- Publicar canonical, Open Graph absoluto, robots e sitemap.
+- Corrigir dados estruturados para não anunciar preços administrativos desatualizados.
+- Aplicar cache somente a recursos públicos, sem armazenar HTML, painel ou fluxos com dados pessoais.
+- Reduzir deslocamento visual de imagens e respeitar economia de dados e redução de movimento.
+- Fixar a versão da biblioteca externa, validar sua integridade e aplicar CSP nas páginas.
+
+**Testes:** metadados, sitemap, escopo do cache, CSP, integridade de dependência e isolamento de páginas privadas.
+
 ## Registro de entregas
 
 | Data | Entrega | Testes | Produção |
@@ -119,3 +143,5 @@ Este roadmap organiza a evolução do agendamento sem cadastro, preservando a in
 | 27/10/2026 | Acompanhamento e observações privadas | 5 testes automatizados + RLS existente | publicado |
 | 27/10/2026 | Auditoria de segurança | 7 testes automatizados | publicado |
 | 27/10/2026 | QA contínuo no GitHub | testes por alteração + smoke a cada 6 horas | publicado |
+| 01/11/2026 | Histórico administrativo e desfazer seguro | testes de contrato, RLS, conflito e dependências | publicado |
+| 01/11/2026 | SEO, cache público, performance e CSP | testes de metadados, cache e segurança | publicado |

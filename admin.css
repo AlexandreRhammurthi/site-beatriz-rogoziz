@@ -56,6 +56,7 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .portal-heading > p:last-child, .view-heading p { max-width: 680px; color: var(--muted); line-height: 1.7; }
 .admin-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 2.5vw, 1.8rem); }
 .admin-option-grid.three-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.admin-option-grid.four-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .three-options .admin-option-card { min-height: 280px; }
 .three-options .option-copy strong { font-size: clamp(1.8rem, 2.7vw, 2.55rem); }
 .admin-option-card { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 1.25rem; min-height: 250px; padding: clamp(1.4rem, 3vw, 2.2rem); overflow: hidden; border: 1px solid rgba(183,154,93,.42); background: var(--paper); color: var(--ink); text-align: left; box-shadow: 0 14px 42px rgba(12,48,47,.07); transition: border-color .2s, box-shadow .2s, transform .2s; }
@@ -202,6 +203,24 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .package-edit-form .wide, .package-session-form .wide { grid-column: 1 / -1; }
 .package-edit-form .button, .package-session-form .button { justify-self: start; }
 
+.history-filter { margin-top: .8rem; }
+.history-filter-fields { grid-template-columns: repeat(2,minmax(0,1fr)); padding: .8rem 0 1.2rem; }
+.history-list { display: grid; gap: .85rem; }
+.history-card { display: grid; grid-template-columns: minmax(150px,.55fr) minmax(0,1.45fr) auto; gap: 1rem; align-items: start; padding: 1rem 1.1rem; border: 1px solid var(--line); background: #f4efe4; }
+.history-card.is-undone { opacity: .68; }
+.history-when, .history-actor, .history-summary { margin: 0; color: var(--muted); font-size: .7rem; line-height: 1.55; }
+.history-card h3 { margin: .15rem 0 .35rem; font-family: var(--serif); font-size: 1.45rem; font-weight: 500; }
+.history-action { display: inline-block; margin-bottom: .4rem; padding: .3rem .5rem; border: 1px solid var(--gold); color: var(--gold); font-size: .54rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.history-action.delete { border-color: var(--danger); color: var(--danger); }
+.history-action.insert { border-color: var(--petrol); color: var(--petrol); }
+.history-details { margin-top: .7rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+.history-details summary { cursor: pointer; color: var(--petrol); font-size: .62rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.history-changes { display: grid; gap: .4rem; margin: .65rem 0 0; padding: 0; list-style: none; }
+.history-changes li { color: var(--muted); font-size: .68rem; line-height: 1.5; overflow-wrap: anywhere; }
+.history-changes strong { color: var(--ink); }
+.history-undo { align-self: center; white-space: nowrap; }
+.history-undone { align-self: center; color: var(--muted); font-size: .6rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+
 .faq-main { width: min(1040px, calc(100% - 2rem)); margin: 0 auto; padding: clamp(2rem, 6vw, 5.5rem) 0 6rem; }
 .faq-hero { padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid rgba(183,154,93,.42); background: var(--paper); box-shadow: 0 18px 60px rgba(12,48,47,.08); }
 .faq-hero h1 { max-width: 800px; }
@@ -254,6 +273,8 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .admin-slots { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .package-metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .package-edit-form, .package-session-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .history-card { grid-template-columns: minmax(140px,.55fr) 1fr; }
+  .history-card > :last-child { grid-column: 2; justify-self: start; }
 }
 
 @media (max-width: 620px) {
@@ -263,6 +284,7 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .admin-main { width: min(100% - 1rem, 1180px); padding-top: 1rem; }
   .admin-portal { padding-top: 1.5rem; }
   .admin-option-grid { grid-template-columns: 1fr; }
+  .admin-option-grid.four-options { grid-template-columns: 1fr; }
   .admin-option-card { min-height: 205px; padding: 1.25rem; }
   .option-copy { margin-top: 2.4rem; }
   .option-copy > span { font-size: .74rem; }
@@ -280,6 +302,8 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .blocked-period { align-items: start; grid-template-columns: 1fr; }
   .blocked-period [data-remove-block] { justify-self: start; }
   .appointments-filter-fields, .appointment-card { grid-template-columns: 1fr; }
+  .history-filter-fields, .history-card { grid-template-columns: 1fr; }
+  .history-card > :last-child { grid-column: 1; }
   .appointment-meta { grid-column: 1; }
   .appointment-admin-tools form { grid-template-columns: 1fr; }
   .appointment-admin-tools .button { grid-column: 1; justify-self: stretch; }

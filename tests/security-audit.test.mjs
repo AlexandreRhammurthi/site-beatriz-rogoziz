@@ -7,6 +7,7 @@ const api = await readFile(new URL("../supabase/functions/booking-api/index.ts",
 const reminders = await readFile(new URL("../supabase/functions/booking-reminders/index.ts", import.meta.url), "utf8");
 const schema = await readFile(new URL("../supabase/migrations/20261025210000_booking_system.sql", import.meta.url), "utf8");
 const security = await readFile(new URL("../supabase/migrations/20261025213000_booking_security.sql", import.meta.url), "utf8");
+const audit = await readFile(new URL("../supabase/migrations/20261101190000_admin_audit_history.sql", import.meta.url), "utf8");
 
 test("arquivos comuns de credenciais são ignorados", () => {
   assert.match(gitignore, /^\.env$/m);
@@ -35,6 +36,7 @@ test("tabelas sensíveis negam acesso anônimo", () => {
     assert.match(security, new RegExp(`revoke all on public\\.${table} from anon`));
   }
   assert.match(security, /revoke all on public\.booking_recovery_codes from anon, authenticated/);
+  assert.match(audit, /revoke all on public\.admin_audit_log from public, anon, authenticated/);
 });
 
 test("função de lembretes exige credencial interna", () => {

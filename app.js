@@ -297,4 +297,17 @@ const year = document.querySelector("[data-year]");
 if (year) year.textContent = new Date().getFullYear();
 
 const video = document.querySelector(".hero-video");
-video?.play().catch(() => document.querySelector(".hero")?.classList.add("video-paused"));
+const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+const saveData = navigator.connection?.saveData === true;
+if (reduceMotion || saveData) {
+  video?.pause();
+  document.querySelector(".hero")?.classList.add("video-paused");
+} else {
+  video?.play().catch(() => document.querySelector(".hero")?.classList.add("video-paused"));
+}
+
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js?v=1").catch(() => {});
+  }, { once: true });
+}

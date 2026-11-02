@@ -25,6 +25,8 @@ const packageForm = document.querySelector("[data-package-form]");
 const packagesFilter = document.querySelector("[data-packages-filter]");
 const packagesSummary = document.querySelector("[data-packages-summary]");
 const packagesList = document.querySelector("[data-packages-list]");
+const historyFilter = document.querySelector("[data-history-filter]");
+const historyList = document.querySelector("[data-history-list]");
 const adminUtils = window.STUDIO_B_ADMIN_UTILS;
 const weekdayLabels = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 
@@ -42,10 +44,44 @@ let manualBookingPackages = [];
 let packagesCache = [];
 let packageServices = [];
 let packagePrices = [];
+let historyCache = [];
 let passwordRecoveryMode = false;
 let currentAdminView = "home";
 const loadedAdminViews = new Set();
 const callbackUrl = () => `${window.location.origin}${window.location.pathname}`;
+
+const auditTableLabels = {
+  services: "Serviço",
+  service_prices: "Valor ou pacote",
+  booking_settings: "Configuração da agenda",
+  availability_rules: "Horário de atendimento",
+  blocked_periods: "Bloqueio de agenda",
+  appointments: "Agendamento",
+  client_packages: "Pacote de cliente",
+  package_sessions: "Sessão de pacote"
+};
+
+const auditActionLabels = { insert: "Criado", update: "Alterado", delete: "Excluído" };
+
+const auditFieldLabels = {
+  name: "Nome", subtitle: "Subtítulo", description: "Descrição", duration_label: "Duração",
+  duration_minutes: "Duração em minutos", whatsapp_message: "Mensagem do WhatsApp", sort_order: "Ordem",
+  is_active: "Visível ou ativo", label: "Opção", price_amount: "Valor", custom_value: "Texto alternativo",
+  original_price: "Valor anterior", is_promotional: "Promocional", booking_enabled: "Agendamento online",
+  reminders_enabled: "Lembretes", booking_horizon_days: "Período aberto", minimum_notice_hours: "Antecedência mínima",
+  cancellation_notice_hours: "Limite de cancelamento", slot_interval_minutes: "Intervalo entre opções",
+  buffer_minutes: "Preparação entre sessões", daily_booking_limit: "Limite diário", reminder_hours_before: "Antecedência do lembrete",
+  weekday: "Dia da semana", start_time: "Início", end_time: "Fim", pause_start_time: "Início da pausa",
+  pause_end_time: "Fim da pausa", starts_at: "Início", ends_at: "Fim", reason: "Motivo",
+  attendance_status: "Comparecimento", admin_notes: "Observações", customer_name: "Cliente",
+  package_label: "Pacote", total_sessions: "Sessões contratadas", purchased_on: "Compra", expires_on: "Validade",
+  session_date: "Data da sessão", notes: "Observações"
+};
+
+const hiddenAuditFields = new Set([
+  "id", "service_id", "package_id", "appointment_id", "client_package_id", "created_at", "updated_at",
+  "manage_token_hash", "google_event_id", "reminder_attempted_at", "reminder_sent_at"
+]);
 
 const friendlyAuthError = (error) => {
   if (!error) return "Não foi possível concluir esta ação.";
@@ -729,7 +765,106 @@ document.querySelector("[data-new-manual-booking]")?.addEventListener("click", (
   manualBookingForm.elements.name.focus();
 });
 
+const formatAuditValue = (value) => {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "boolean") return value ? "Sim" : "Não";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+};
+
+const auditRecordLabel = (entry) => {
+  const data = entry.new_data || entry.old_data || {};
+  if (entry.table_name === "services") return data.name || "Serviço";
+  if (entry.table_name === "service_prices") return data.label || "Opção de valor";
+  if (entry.table_name === "booking_settings") return "Disponibilidade online";
+  if (entry.table_name === "availability_rules") {
+    return `${weekdayLabels[Number(data.weekday)] || "Dia"}, ${String(data.start_time || "").slice(0, 5)}–${String(data.end_time || "").slice(0, 5)}`;
+  }
+  if (entry.table_name === "blocked_periods") return data.reason || "Período indisponível";
+  if (entry.table_name === "appointments") return data.customer_name || "Atendimento";
+  if (entry.table_name === "client_packages") return `${data.customer_name || "Cliente"} — ${data.package_label || "Pacote"}`;
+  if (entry.table_name === "package_sessions") return data.session_date ? `Sessão de ${data.session_date}` : "Sessão do pacote";
+  return entry.record_id;
+};
+
+const auditChanges = (entry) => {
+  const before = entry.old_data || {};
+  const after = entry.new_data || {};
+  const fields = [...new Set([...Object.keys(before), ...Object.keys(after)])]
+    .filter((field) => !hiddenAuditFields.has(field) && JSON.stringify(before[field]) !== JSON.stringify(after[field]));
+  return fields.slice(0, 10).map((field) => ({
+    label: auditFieldLabels[field] || field.replaceAll("_", " "),
+    before: formatAuditValue(before[field]),
+    after: formatAuditValue(after[field])
+  }));
+};
+
+const historyMarkup = (entry) => {
+  const changes = auditChanges(entry);
+  const actionLabel = entry.source_audit_id ? "Reversão" : (auditActionLabels[entry.action] || entry.action);
+  const happenedAt = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: adminUtils?.TIMEZONE || "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(new Date(entry.changed_at));
+  const summary = changes.length
+    ? changes.slice(0, 2).map((change) => change.label).join(" e ")
+    : "Registro administrativo";
+  return `
+    <article class="history-card ${entry.undone_at ? "is-undone" : ""}" data-audit-id="${entry.id}">
+      <div>
+        <span class="history-action ${escapeHTML(entry.action)}">${escapeHTML(actionLabel)}</span>
+        <p class="history-when">${escapeHTML(happenedAt)}</p>
+        <p class="history-actor">${escapeHTML(entry.changed_by_email || "Administrador")}</p>
+      </div>
+      <div>
+        <p class="eyebrow">${escapeHTML(auditTableLabels[entry.table_name] || entry.table_name)}</p>
+        <h3>${escapeHTML(auditRecordLabel(entry))}</h3>
+        <p class="history-summary">${escapeHTML(summary)}</p>
+        <details class="history-details">
+          <summary>Ver detalhes</summary>
+          <ul class="history-changes">
+            ${changes.length ? changes.map((change) => `<li><strong>${escapeHTML(change.label)}:</strong> ${escapeHTML(change.before)} → ${escapeHTML(change.after)}</li>`).join("") : "<li>Nenhum campo de conteúdo foi alterado.</li>"}
+          </ul>
+        </details>
+      </div>
+      ${entry.undone_at
+        ? '<span class="history-undone">Desfeito</span>'
+        : `<button class="button secondary history-undo" type="button" data-undo-audit="${entry.id}">Desfazer</button>`}
+    </article>`;
+};
+
+const renderHistory = () => {
+  if (!historyList || !historyFilter) return;
+  const tableName = historyFilter.elements.table_name.value;
+  const action = historyFilter.elements.action.value;
+  const visible = historyCache.filter((entry) =>
+    (tableName === "all" || entry.table_name === tableName) &&
+    (action === "all" || entry.action === action)
+  );
+  historyList.innerHTML = visible.length
+    ? visible.map(historyMarkup).join("")
+    : '<p class="appointments-empty">Nenhuma alteração encontrada para estes filtros.</p>';
+};
+
+const loadHistory = async () => {
+  if (!historyList) return;
+  historyList.innerHTML = '<p class="appointments-empty">Carregando histórico…</p>';
+  const { data, error } = await client.from("admin_audit_log")
+    .select("id, table_name, record_id, action, old_data, new_data, changed_by_email, changed_at, source_audit_id, undone_at, undo_audit_id")
+    .order("changed_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  historyCache = data || [];
+  renderHistory();
+};
+
 const loadAdminView = async (view) => {
+  if (view === "history") {
+    await loadHistory();
+    loadedAdminViews.add(view);
+    return;
+  }
   if (loadedAdminViews.has(view)) return;
   if (view === "services") await loadServices();
   if (view === "packages") await loadPackages();
@@ -896,6 +1031,7 @@ logoutButton?.addEventListener("click", async () => {
   passwordRecoveryMode = false;
   loadedAdminViews.clear();
   appointmentsCache = [];
+  historyCache = [];
   manualBookingConfig = null;
   currentAdminView = "home";
   setView("auth");
@@ -907,6 +1043,39 @@ dashboard?.addEventListener("click", (event) => {
   const navigationButton = event.target.closest("[data-admin-target]");
   if (!navigationButton) return;
   showAdminView(navigationButton.dataset.adminTarget);
+});
+
+historyFilter?.addEventListener("change", renderHistory);
+
+document.querySelector("[data-refresh-history]")?.addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  setBusy(button, true);
+  try {
+    await loadHistory();
+    showStatus("Histórico atualizado.");
+  } catch (error) {
+    showStatus(error.message || "Não foi possível atualizar o histórico.", true);
+  } finally {
+    setBusy(button, false);
+  }
+});
+
+historyList?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-undo-audit]");
+  if (!button) return;
+  const entry = historyCache.find((item) => String(item.id) === button.dataset.undoAudit);
+  if (!entry || entry.undone_at) return;
+  if (!window.confirm(`Desfazer “${auditRecordLabel(entry)}”? A operação só continuará se não houver uma alteração mais recente no mesmo registro.`)) return;
+  setBusy(button, true);
+  const { error } = await client.rpc("undo_admin_change", { p_audit_id: Number(entry.id) });
+  setBusy(button, false);
+  if (error) return showStatus(error.message, true);
+  loadedAdminViews.clear();
+  appointmentsCache = [];
+  packagesCache = [];
+  await loadHistory();
+  loadedAdminViews.add("history");
+  showStatus("Alteração desfeita com segurança.");
 });
 
 document.querySelector("[data-add-rule]")?.addEventListener("click", () => addRuleRow());

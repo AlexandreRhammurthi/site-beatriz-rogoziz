@@ -11,13 +11,15 @@ const supabaseUrl = configSource.match(/url:\s*"([^"]+)"/)?.[1];
 
 test("site publicado expõe o contrato atualizado", { skip: !run }, async () => {
   const stamp = Date.now();
-  const [home, booking, admin, manage, servicesFaq, scheduleFaq] = await Promise.all([
+  const [home, booking, admin, manage, servicesFaq, scheduleFaq, robots, sitemap] = await Promise.all([
     fetch(`${baseUrl}/?v=${stamp}`),
     fetch(`${baseUrl}/booking.html?v=${stamp}`),
     fetch(`${baseUrl}/admin.html?v=${stamp}`),
     fetch(`${baseUrl}/manage-booking.html?v=${stamp}`),
     fetch(`${baseUrl}/admin-faq-servicos.html?v=${stamp}`),
-    fetch(`${baseUrl}/admin-faq-agenda.html?v=${stamp}`)
+    fetch(`${baseUrl}/admin-faq-agenda.html?v=${stamp}`),
+    fetch(`${baseUrl}/robots.txt?v=${stamp}`),
+    fetch(`${baseUrl}/sitemap.xml?v=${stamp}`)
   ]);
   assert.equal(home.status, 200);
   assert.equal(booking.status, 200);
@@ -25,9 +27,12 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.equal(manage.status, 200);
   assert.equal(servicesFaq.status, 200);
   assert.equal(scheduleFaq.status, 200);
+  assert.equal(robots.status, 200);
+  assert.equal(sitemap.status, 200);
   const homeHtml = await home.text();
   assert.match(homeHtml, />Agendar online</);
   assert.match(homeHtml, /data-whatsapp/);
+  assert.match(homeHtml, /rel="canonical" href="https:\/\/www\.beatrizrogoziz\.com\.br\/"/);
   assert.match(await booking.text(), /href="privacy\.html"/);
   assert.match(await (await fetch(`${baseUrl}/booking.html?v=${stamp + 1}`)).text(), /data-available-dates/);
   const adminHtml = await admin.text();
@@ -38,6 +43,8 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-admin-target="appointments"/);
   assert.match(adminHtml, /data-admin-target="create-appointment"/);
   assert.match(adminHtml, /data-admin-target="packages"/);
+  assert.match(adminHtml, /data-admin-target="history"/);
+  assert.match(adminHtml, /data-history-list/);
   assert.match(adminHtml, /href="admin-faq-servicos\.html"/);
   assert.match(adminHtml, /href="admin-faq-agenda\.html"/);
   assert.match(adminHtml, /data-blocked-period-form/);
@@ -51,6 +58,8 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(await manage.text(), /data-reschedule-form/);
   assert.match(await servicesFaq.text(), /FAQ de Serviços e valores/);
   assert.match(await scheduleFaq.text(), /Intervalo não é preparação/);
+  assert.match(await robots.text(), /sitemap\.xml/i);
+  assert.match(await sitemap.text(), /https:\/\/www\.beatrizrogoziz\.com\.br\//);
 });
 
 test("API pública de agendamento permanece operacional", { skip: !run }, async () => {
@@ -126,6 +135,13 @@ test("pacotes e sessões não podem ser consultados anonimamente", { skip: !run 
     });
     assert.ok([401, 403].includes(response.status), `${table}: status inesperado ${response.status}`);
   }
+});
+
+test("histórico administrativo não pode ser consultado anonimamente", { skip: !run }, async () => {
+  const response = await fetch(`${supabaseUrl}/rest/v1/admin_audit_log?select=id&limit=1`, {
+    headers: { apikey: key }
+  });
+  assert.ok([401, 403].includes(response.status), `status inesperado: ${response.status}`);
 });
 
 test("executor de lembretes rejeita chamadas públicas", { skip: !run }, async () => {

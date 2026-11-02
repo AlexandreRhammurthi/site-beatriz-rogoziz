@@ -26,6 +26,8 @@ jobs:
           node --check admin-utils.js
           node --check booking.js
           node --check manage-booking.js
+          node --check app.js
+          node --check sw.js
       - name: Executar testes
         run: node --test tests/*.test.mjs
 

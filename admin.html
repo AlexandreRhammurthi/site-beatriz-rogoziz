@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#082f30" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://exqprqsnxdyzonkjippe.supabase.co wss://exqprqsnxdyzonkjippe.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
     <title>Painel administrativo | Studio B</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=14" />
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <link rel="stylesheet" href="admin.css?v=15" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" integrity="sha384-UagCvVPT5XXA0Hx+nJYUAGBFseHT9zBgpJMSebsAxl9lciTwbT+39j5VfRjdP5Tp" crossorigin="anonymous" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
     <script src="admin-utils.js?v=4" defer></script>
-    <script src="admin.js?v=15" defer></script>
+    <script src="admin.js?v=16" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -102,7 +104,7 @@
             <h1 id="admin-home-title" tabindex="-1">O que você deseja administrar?</h1>
             <p>Escolha uma área para acessar somente as ferramentas que você precisa agora.</p>
           </div>
-          <div class="admin-option-grid three-options">
+          <div class="admin-option-grid four-options">
             <button class="admin-option-card" type="button" data-admin-target="services">
               <span class="option-index" aria-hidden="true">01</span>
               <span class="option-copy">
@@ -124,6 +126,14 @@
               <span class="option-copy">
                 <strong>Agenda</strong>
                 <span>Configure a disponibilidade do Studio B ou consulte os atendimentos marcados.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="admin-option-card" type="button" data-admin-target="history">
+              <span class="option-index" aria-hidden="true">04</span>
+              <span class="option-copy">
+                <strong>Histórico</strong>
+                <span>Consulte mudanças administrativas e desfaça com segurança uma alteração recente.</span>
               </span>
               <span class="option-arrow" aria-hidden="true">→</span>
             </button>
@@ -388,6 +398,53 @@
             </div>
           </div>
           <div class="services-list" data-services-list></div>
+        </section>
+
+        <section class="admin-view" data-admin-view="history" aria-labelledby="history-title" hidden>
+          <div class="view-heading">
+            <button class="view-back" type="button" data-admin-target="home">← Voltar ao início</button>
+            <div>
+              <p class="eyebrow">Segurança administrativa</p>
+              <h1 id="history-title" tabindex="-1">Histórico de alterações</h1>
+              <p>Veja quem alterou informações do painel e desfaça uma ação somente quando o registro não tiver mudanças posteriores.</p>
+            </div>
+          </div>
+          <section class="booking-settings-card" aria-labelledby="history-list-title">
+            <div class="settings-heading">
+              <div>
+                <p class="eyebrow">Trilha administrativa</p>
+                <h2 id="history-list-title">Alterações recentes</h2>
+                <p>O histórico registra apenas ações realizadas por administradores autenticados. Operações automáticas do agendamento não aparecem aqui.</p>
+              </div>
+              <button class="button secondary" type="button" data-refresh-history>Atualizar</button>
+            </div>
+            <form class="history-filter" data-history-filter>
+              <div class="fields-grid history-filter-fields">
+                <label>Área
+                  <select name="table_name">
+                    <option value="all">Todas</option>
+                    <option value="services">Serviços</option>
+                    <option value="service_prices">Valores e pacotes</option>
+                    <option value="booking_settings">Configurações da agenda</option>
+                    <option value="availability_rules">Horários de atendimento</option>
+                    <option value="blocked_periods">Bloqueios</option>
+                    <option value="appointments">Agendamentos</option>
+                    <option value="client_packages">Pacotes de clientes</option>
+                    <option value="package_sessions">Sessões de pacotes</option>
+                  </select>
+                </label>
+                <label>Ação
+                  <select name="action">
+                    <option value="all">Todas</option>
+                    <option value="insert">Criações</option>
+                    <option value="update">Alterações</option>
+                    <option value="delete">Exclusões</option>
+                  </select>
+                </label>
+              </div>
+            </form>
+            <div class="history-list" data-history-list aria-live="polite"></div>
+          </section>
         </section>
       </section>
 
