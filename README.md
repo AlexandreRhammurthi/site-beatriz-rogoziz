@@ -26,7 +26,7 @@ O frontend usa somente a chave pública do Supabase. As alterações são proteg
 
 ## Galeria do Instagram
 
-A seção **Galeria** exibe um carrossel responsivo antes de “Onde estamos”. Enquanto a conexão oficial não estiver ativa, o site usa uma seleção das fotos do Studio B e mantém o acesso direto a `@beatrizrogozizribeiro_`.
+A seção **Galeria** exibe um carrossel responsivo com 12 imagens locais antes de “Onde estamos” e mantém o acesso direto a `@beatrizrogozizribeiro_`. A exibição não depende da disponibilidade do Instagram ou de credenciais externas.
 
 Para atualizar automaticamente com as publicações recentes, conecte uma conta profissional do Instagram pela API oficial da Meta e salve o token apenas nos Secrets do Supabase:
 

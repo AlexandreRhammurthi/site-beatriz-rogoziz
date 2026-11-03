@@ -49,7 +49,8 @@ test("páginas possuem CSP e áreas privadas permanecem noindex", () => {
 test("CSP permite somente o JSON-LD inline conhecido", () => {
   const jsonLd = home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
   assert.ok(jsonLd);
-  const hash = createHash("sha256").update(jsonLd).digest("base64");
+  const normalizedJsonLd = jsonLd.replaceAll("\r\n", "\n");
+  const hash = createHash("sha256").update(normalizedJsonLd).digest("base64");
   assert.match(home, new RegExp(`script-src[^\"]+'sha256-${hash.replaceAll("+", "\\+")}'`));
   assert.doesNotMatch(home, /script-src[^\"]+'unsafe-inline'/);
 });

@@ -327,17 +327,8 @@ const renderGallery = (posts, live = false) => {
   window.requestAnimationFrame(updateGalleryPosition);
 };
 
-const loadInstagramGallery = async () => {
+const loadInstagramGallery = () => {
   if (galleryFallbackPosts.length) renderGallery(galleryFallbackPosts, false);
-  const settings = window.STUDIO_B_SUPABASE;
-  if (!settings?.instagramFeedUrl || !settings?.publishableKey) return;
-  const response = await fetch(settings.instagramFeedUrl, {
-    headers: { apikey: settings.publishableKey, Accept: "application/json" }
-  });
-  if (!response.ok) return;
-  const result = await response.json();
-  const remotePosts = Array.isArray(result.items) ? result.items : [];
-  if (remotePosts.length) renderGallery(remotePosts, true);
 };
 
 galleryPrev?.addEventListener("click", () => scrollGallery(-1));
@@ -359,9 +350,7 @@ galleryDots?.addEventListener("click", (event) => {
 });
 window.addEventListener("resize", updateGalleryPosition, { passive: true });
 
-loadInstagramGallery().catch((error) => {
-  console.warn("Não foi possível atualizar a galeria do Instagram; exibindo os destaques locais.", error);
-});
+loadInstagramGallery();
 
 const header = document.querySelector("[data-header]");
 const fab = document.querySelector("[data-fab]");

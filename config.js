@@ -21,6 +21,38 @@ window.STUDIO_B = {
       {
         image: "assets/anna-beatriz.jpeg",
         caption: "Beatriz Rogoziz à frente do Studio B."
+      },
+      {
+        image: "assets/gallery-video-01.jpeg",
+        caption: "Um convite para entrar e desacelerar."
+      },
+      {
+        image: "assets/gallery-video-02.jpeg",
+        caption: "Luz suave e acolhimento em cada detalhe."
+      },
+      {
+        image: "assets/gallery-video-03.jpeg",
+        caption: "O ambiente preparado para o seu cuidado."
+      },
+      {
+        image: "assets/gallery-video-04.jpeg",
+        caption: "Uma atmosfera reservada para o seu momento."
+      },
+      {
+        image: "assets/gallery-video-05.jpeg",
+        caption: "Conforto e tranquilidade no Studio B."
+      },
+      {
+        image: "assets/gallery-video-06.jpeg",
+        caption: "Cuidado com tempo, atenção e intenção."
+      },
+      {
+        image: "assets/gallery-video-07.jpeg",
+        caption: "Detalhes que tornam a experiência especial."
+      },
+      {
+        image: "assets/gallery-video-08.jpeg",
+        caption: "Beatriz Rogoziz no espaço do Studio B."
       }
     ]
   },
