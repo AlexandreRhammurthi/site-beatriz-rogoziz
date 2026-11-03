@@ -72,12 +72,18 @@ Deno.serve(async (request) => {
   }
 
   try {
+    const requestUrl = new URL(request.url);
+    const after = requestUrl.searchParams.get("after") || "";
+    if (after && (after.length > 1024 || !/^[A-Za-z0-9._=-]+$/.test(after))) {
+      return json(origin, { error: "Cursor de paginação inválido." }, 400);
+    }
     const graphRoot = INSTAGRAM_GRAPH_VERSION
       ? `https://graph.instagram.com/${INSTAGRAM_GRAPH_VERSION}`
       : "https://graph.instagram.com";
     const endpoint = new URL(`${graphRoot}/${encodeURIComponent(INSTAGRAM_USER_ID)}/media`);
     endpoint.searchParams.set("fields", "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp");
     endpoint.searchParams.set("limit", "12");
+    if (after) endpoint.searchParams.set("after", after);
     endpoint.searchParams.set("access_token", INSTAGRAM_ACCESS_TOKEN);
 
     const response = await fetch(endpoint, {
@@ -101,11 +107,15 @@ Deno.serve(async (request) => {
         timestamp: item.timestamp || "",
       }))
       .filter((item: InstagramMedia) => item.id && (item.thumbnail_url || item.media_url));
+    const nextCursor = String(payload?.paging?.cursors?.after || "");
+    const hasMore = Boolean(payload?.paging?.next && nextCursor);
 
     return json(origin, {
       connected: true,
       profile_url: PROFILE_URL,
       items,
+      next_cursor: hasMore ? nextCursor : "",
+      has_more: hasMore,
     }, 200, "public, max-age=300, s-maxage=1800, stale-while-revalidate=3600");
   } catch (error) {
     console.error("Falha ao carregar a galeria do Instagram.", error instanceof Error ? error.message : "erro desconhecido");

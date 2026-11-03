@@ -42,10 +42,22 @@ test("galeria usa destaques locais e atualiza pelo endpoint seguro", () => {
   assert.match(config, /assets\/banner\.jpeg/);
   assert.match(supabaseConfig, /functions\/v1\/instagram-feed/);
   assert.match(app, /instagramFeedUrl/);
-  assert.match(app, /renderGallery\(remotePosts, true\)/);
+  assert.match(app, /loadInstagramPage\(galleryNextCursor, true\)/);
+  assert.match(app, /endpoint\.searchParams\.set\("after", after\)/);
   assert.match(edgeFunction, /Deno\.env\.get\("INSTAGRAM_ACCESS_TOKEN"\)/);
   assert.match(edgeFunction, /graph\.instagram\.com/);
+  assert.match(edgeFunction, /payload\?\.paging\?\.cursors\?\.after/);
+  assert.match(edgeFunction, /next_cursor: hasMore/);
+  assert.match(edgeFunction, /endpoint\.searchParams\.set\("after", after\)/);
   assert.doesNotMatch(supabaseConfig, /INSTAGRAM_ACCESS_TOKEN/);
   assert.doesNotMatch(config, /INSTAGRAM_ACCESS_TOKEN/);
+});
+
+test("feed carrega páginas de 12 itens até o fim sem expor o cursor da Meta com o token", () => {
+  assert.match(edgeFunction, /endpoint\.searchParams\.set\("limit", "12"\)/);
+  assert.match(app, /remaining < galleryViewport\.clientWidth \* 1\.5/);
+  assert.match(app, /galleryNextCursor/);
+  assert.match(app, /Você chegou à última publicação disponível/);
+  assert.doesNotMatch(app, /access_token/);
 });
 

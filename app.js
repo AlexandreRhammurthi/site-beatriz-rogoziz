@@ -261,6 +261,8 @@ const normalizeGalleryPost = (post) => {
 
 let galleryPosts = [];
 let galleryFrame = 0;
+let galleryNextCursor = "";
+let galleryLoadingPromise = null;
 
 const galleryMetaLabel = (post) => {
   if (!post.timestamp) return "Ver no Instagram";
@@ -277,16 +279,21 @@ const updateGalleryPosition = () => {
   const step = (firstCard?.getBoundingClientRect().width || galleryViewport.clientWidth) + (Number.parseFloat(styles.columnGap) || 0);
   const activeIndex = Math.min(galleryPosts.length - 1, Math.max(0, Math.round(galleryViewport.scrollLeft / Math.max(step, 1))));
   galleryDots?.querySelectorAll(".gallery-dot").forEach((dot, index) => {
-    const active = index === activeIndex;
+    const active = index === Math.floor(activeIndex / 12);
     dot.classList.toggle("active", active);
     dot.setAttribute("aria-current", active ? "true" : "false");
   });
   galleryPrev && (galleryPrev.disabled = galleryViewport.scrollLeft <= 4);
-  galleryNext && (galleryNext.disabled = galleryViewport.scrollLeft >= galleryViewport.scrollWidth - galleryViewport.clientWidth - 4);
+  const reachedEnd = galleryViewport.scrollLeft >= galleryViewport.scrollWidth - galleryViewport.clientWidth - 4;
+  galleryNext && (galleryNext.disabled = reachedEnd && !galleryNextCursor);
 };
 
-const scrollGallery = (direction) => {
+const scrollGallery = async (direction) => {
   if (!galleryViewport || !galleryTrack) return;
+  const reachedEnd = galleryViewport.scrollLeft >= galleryViewport.scrollWidth - galleryViewport.clientWidth - 4;
+  if (direction > 0 && reachedEnd && galleryNextCursor) {
+    await loadInstagramPage(galleryNextCursor, true);
+  }
   const firstCard = galleryTrack.firstElementChild;
   const gap = Number.parseFloat(window.getComputedStyle(galleryTrack).columnGap) || 0;
   const distance = (firstCard?.getBoundingClientRect().width || galleryViewport.clientWidth) + gap;
@@ -294,9 +301,19 @@ const scrollGallery = (direction) => {
   galleryViewport.scrollBy({ left: direction * distance, behavior: reducedMotion ? "auto" : "smooth" });
 };
 
-const renderGallery = (posts, live = false) => {
+const renderGallery = (posts, { live = false, append = false, nextCursor = "" } = {}) => {
   if (!galleryTrack || !galleryViewport) return;
-  galleryPosts = posts.map(normalizeGalleryPost).filter(Boolean).slice(0, 12);
+  const normalizedPosts = posts.map(normalizeGalleryPost).filter(Boolean);
+  const previousScroll = galleryViewport.scrollLeft;
+  const combinedPosts = append ? [...galleryPosts, ...normalizedPosts] : normalizedPosts;
+  const seen = new Set();
+  galleryPosts = combinedPosts.filter((post) => {
+    const key = post.id || post.permalink || post.image_url;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  galleryNextCursor = nextCursor;
   if (!galleryPosts.length) return;
 
   galleryTrack.innerHTML = galleryPosts.map((post, index) => {
@@ -320,31 +337,64 @@ const renderGallery = (posts, live = false) => {
   }).join("");
 
   if (galleryDots) {
-    galleryDots.innerHTML = galleryPosts.map((_, index) => `<button class="gallery-dot${index === 0 ? " active" : ""}" type="button" aria-label="Ir para a publicação ${index + 1}" aria-current="${index === 0 ? "true" : "false"}" data-gallery-index="${index}"></button>`).join("");
+    const pageCount = Math.ceil(galleryPosts.length / 12);
+    galleryDots.innerHTML = Array.from({ length: pageCount }, (_, index) => `<button class="gallery-dot${index === 0 ? " active" : ""}" type="button" aria-label="Ir para o grupo ${index + 1} de publicações" aria-current="${index === 0 ? "true" : "false"}" data-gallery-index="${index * 12}"></button>`).join("");
   }
-  if (galleryStatus) galleryStatus.textContent = live ? "Publicações recentes do Instagram." : "Destaques do Studio B — acompanhe todas as publicações no Instagram.";
-  galleryViewport.scrollLeft = 0;
+  if (galleryStatus) {
+    galleryStatus.textContent = live
+      ? galleryNextCursor
+        ? `${galleryPosts.length} publicações carregadas — continue deslizando para ver mais.`
+        : `Você chegou à última publicação disponível no Instagram (${galleryPosts.length}).`
+      : "Destaques do Studio B — acompanhe todas as publicações no Instagram.";
+  }
+  galleryViewport.scrollLeft = append ? previousScroll : 0;
   window.requestAnimationFrame(updateGalleryPosition);
 };
 
-const loadInstagramGallery = async () => {
-  if (galleryFallbackPosts.length) renderGallery(galleryFallbackPosts, false);
+const loadInstagramPage = (after = "", append = false) => {
+  if (galleryLoadingPromise) return galleryLoadingPromise;
   const settings = window.STUDIO_B_SUPABASE;
-  if (!settings?.instagramFeedUrl || !settings?.publishableKey) return;
-  const response = await fetch(settings.instagramFeedUrl, {
-    headers: { apikey: settings.publishableKey, Accept: "application/json" }
+  if (!settings?.instagramFeedUrl || !settings?.publishableKey) return Promise.resolve();
+
+  galleryLoadingPromise = (async () => {
+    const endpoint = new URL(settings.instagramFeedUrl);
+    if (after) endpoint.searchParams.set("after", after);
+    const response = await fetch(endpoint, {
+      headers: { apikey: settings.publishableKey, Accept: "application/json" }
+    });
+    if (!response.ok) return;
+    const result = await response.json();
+    const remotePosts = Array.isArray(result.items) ? result.items : [];
+    if (remotePosts.length) {
+      renderGallery(remotePosts, {
+        live: true,
+        append,
+        nextCursor: result.has_more ? String(result.next_cursor || "") : ""
+      });
+    }
+  })().finally(() => {
+    galleryLoadingPromise = null;
+    updateGalleryPosition();
   });
-  if (!response.ok) return;
-  const result = await response.json();
-  const remotePosts = Array.isArray(result.items) ? result.items : [];
-  if (remotePosts.length) renderGallery(remotePosts, true);
+  return galleryLoadingPromise;
 };
 
-galleryPrev?.addEventListener("click", () => scrollGallery(-1));
-galleryNext?.addEventListener("click", () => scrollGallery(1));
+const loadInstagramGallery = async () => {
+  if (galleryFallbackPosts.length) renderGallery(galleryFallbackPosts, { live: false });
+  await loadInstagramPage();
+};
+
+galleryPrev?.addEventListener("click", () => scrollGallery(-1).catch(() => {}));
+galleryNext?.addEventListener("click", () => scrollGallery(1).catch(() => {}));
 galleryViewport?.addEventListener("scroll", () => {
   window.cancelAnimationFrame(galleryFrame);
-  galleryFrame = window.requestAnimationFrame(updateGalleryPosition);
+  galleryFrame = window.requestAnimationFrame(() => {
+    updateGalleryPosition();
+    const remaining = galleryViewport.scrollWidth - galleryViewport.clientWidth - galleryViewport.scrollLeft;
+    if (galleryNextCursor && remaining < galleryViewport.clientWidth * 1.5) {
+      loadInstagramPage(galleryNextCursor, true).catch(() => {});
+    }
+  });
 }, { passive: true });
 galleryViewport?.addEventListener("keydown", (event) => {
   if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
