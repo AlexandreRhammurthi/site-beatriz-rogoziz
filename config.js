@@ -2,6 +2,28 @@ window.STUDIO_B = {
   // Somente números, incluindo 55 e DDD
   whatsappNumber: "5521983152382",
   whatsappMessage: "Olá! Gostaria de consultar os horários disponíveis com Beatriz Rogoziz no Studio B.",
+  instagram: {
+    username: "beatrizrogozizribeiro_",
+    profileUrl: "https://www.instagram.com/beatrizrogozizribeiro_/",
+    fallbackPosts: [
+      {
+        image: "assets/banner.jpeg",
+        caption: "Saúde, equilíbrio e bem-estar em cada detalhe do Studio B."
+      },
+      {
+        image: "assets/atendimento.jpeg",
+        caption: "Cuidado corporal com presença, atenção e intenção."
+      },
+      {
+        image: "assets/espaco.jpeg",
+        caption: "Um espaço preparado para acolher o seu momento."
+      },
+      {
+        image: "assets/anna-beatriz.jpeg",
+        caption: "Beatriz Rogoziz à frente do Studio B."
+      }
+    ]
+  },
   services: [
     {
       number: "01",

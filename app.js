@@ -209,6 +209,160 @@ const loadBookingConfig = async () => {
 
 loadBookingConfig().catch((error) => console.warn("Agendamento online indisponível.", error));
 
+const galleryTrack = document.querySelector("[data-gallery-track]");
+const galleryViewport = document.querySelector("[data-gallery-viewport]");
+const galleryPrev = document.querySelector("[data-gallery-prev]");
+const galleryNext = document.querySelector("[data-gallery-next]");
+const galleryDots = document.querySelector("[data-gallery-dots]");
+const galleryStatus = document.querySelector("[data-gallery-status]");
+const instagram = studio.instagram || {};
+
+const safeGalleryImage = (value) => {
+  try {
+    const url = new URL(String(value || ""), window.location.href);
+    const allowedRemote = url.hostname.endsWith(".cdninstagram.com") || url.hostname.endsWith(".fbcdn.net");
+    return url.origin === window.location.origin || allowedRemote ? url.href : "";
+  } catch {
+    return "";
+  }
+};
+
+const safeInstagramLink = (value) => {
+  try {
+    const url = new URL(String(value || instagram.profileUrl || "https://www.instagram.com/"));
+    const instagramHost = url.hostname === "instagram.com" || url.hostname === "www.instagram.com";
+    return url.protocol === "https:" && instagramHost ? url.href : instagram.profileUrl;
+  } catch {
+    return instagram.profileUrl || "https://www.instagram.com/";
+  }
+};
+
+const galleryFallbackPosts = (Array.isArray(instagram.fallbackPosts) ? instagram.fallbackPosts : [])
+  .map((post) => ({
+    image_url: safeGalleryImage(post.image),
+    caption: String(post.caption || "Studio B — Beatriz Rogoziz"),
+    permalink: safeInstagramLink(instagram.profileUrl),
+    media_type: "IMAGE"
+  }))
+  .filter((post) => post.image_url);
+
+const normalizeGalleryPost = (post) => {
+  const imageUrl = safeGalleryImage(post.thumbnail_url || post.media_url || post.image_url);
+  if (!imageUrl) return null;
+  return {
+    id: String(post.id || ""),
+    image_url: imageUrl,
+    caption: String(post.caption || "Uma publicação do Studio B no Instagram").trim(),
+    permalink: safeInstagramLink(post.permalink),
+    media_type: String(post.media_type || "IMAGE").toUpperCase(),
+    timestamp: post.timestamp ? String(post.timestamp) : ""
+  };
+};
+
+let galleryPosts = [];
+let galleryFrame = 0;
+
+const galleryMetaLabel = (post) => {
+  if (!post.timestamp) return "Ver no Instagram";
+  const date = new Date(post.timestamp);
+  if (Number.isNaN(date.getTime())) return "Ver no Instagram";
+  return `${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(date)} · Ver no Instagram`;
+};
+
+const updateGalleryPosition = () => {
+  if (!galleryViewport || !galleryTrack || !galleryPosts.length) return;
+  const cards = [...galleryTrack.children];
+  const firstCard = cards[0];
+  const styles = window.getComputedStyle(galleryTrack);
+  const step = (firstCard?.getBoundingClientRect().width || galleryViewport.clientWidth) + (Number.parseFloat(styles.columnGap) || 0);
+  const activeIndex = Math.min(galleryPosts.length - 1, Math.max(0, Math.round(galleryViewport.scrollLeft / Math.max(step, 1))));
+  galleryDots?.querySelectorAll(".gallery-dot").forEach((dot, index) => {
+    const active = index === activeIndex;
+    dot.classList.toggle("active", active);
+    dot.setAttribute("aria-current", active ? "true" : "false");
+  });
+  galleryPrev && (galleryPrev.disabled = galleryViewport.scrollLeft <= 4);
+  galleryNext && (galleryNext.disabled = galleryViewport.scrollLeft >= galleryViewport.scrollWidth - galleryViewport.clientWidth - 4);
+};
+
+const scrollGallery = (direction) => {
+  if (!galleryViewport || !galleryTrack) return;
+  const firstCard = galleryTrack.firstElementChild;
+  const gap = Number.parseFloat(window.getComputedStyle(galleryTrack).columnGap) || 0;
+  const distance = (firstCard?.getBoundingClientRect().width || galleryViewport.clientWidth) + gap;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  galleryViewport.scrollBy({ left: direction * distance, behavior: reducedMotion ? "auto" : "smooth" });
+};
+
+const renderGallery = (posts, live = false) => {
+  if (!galleryTrack || !galleryViewport) return;
+  galleryPosts = posts.map(normalizeGalleryPost).filter(Boolean).slice(0, 12);
+  if (!galleryPosts.length) return;
+
+  galleryTrack.innerHTML = galleryPosts.map((post, index) => {
+    const mediaLabel = post.media_type === "VIDEO" ? "Vídeo" : post.media_type === "CAROUSEL_ALBUM" ? "Álbum" : "Publicação";
+    return `
+      <article class="gallery-card" aria-label="${escapeHTML(mediaLabel)} ${index + 1} de ${galleryPosts.length}">
+        <img src="${escapeHTML(post.image_url)}" alt="${escapeHTML(post.caption.slice(0, 120))}" width="720" height="900" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+        <a class="gallery-card-link" href="${escapeHTML(post.permalink)}" target="_blank" rel="noopener noreferrer" aria-label="Abrir ${escapeHTML(mediaLabel.toLowerCase())} no Instagram: ${escapeHTML(post.caption.slice(0, 100))}">
+          <span class="gallery-card-top">
+            <span class="gallery-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4.25"></circle><circle cx="17.4" cy="6.7" r="1"></circle></svg>
+            </span>
+          </span>
+          <span class="gallery-card-copy">
+            <span class="gallery-card-caption">${escapeHTML(post.caption)}</span>
+            <span class="gallery-card-meta">${escapeHTML(galleryMetaLabel(post))}</span>
+          </span>
+        </a>
+      </article>
+    `;
+  }).join("");
+
+  if (galleryDots) {
+    galleryDots.innerHTML = galleryPosts.map((_, index) => `<button class="gallery-dot${index === 0 ? " active" : ""}" type="button" aria-label="Ir para a publicação ${index + 1}" aria-current="${index === 0 ? "true" : "false"}" data-gallery-index="${index}"></button>`).join("");
+  }
+  if (galleryStatus) galleryStatus.textContent = live ? "Publicações recentes do Instagram." : "Destaques do Studio B — acompanhe todas as publicações no Instagram.";
+  galleryViewport.scrollLeft = 0;
+  window.requestAnimationFrame(updateGalleryPosition);
+};
+
+const loadInstagramGallery = async () => {
+  if (galleryFallbackPosts.length) renderGallery(galleryFallbackPosts, false);
+  const settings = window.STUDIO_B_SUPABASE;
+  if (!settings?.instagramFeedUrl || !settings?.publishableKey) return;
+  const response = await fetch(settings.instagramFeedUrl, {
+    headers: { apikey: settings.publishableKey, Accept: "application/json" }
+  });
+  if (!response.ok) return;
+  const result = await response.json();
+  const remotePosts = Array.isArray(result.items) ? result.items : [];
+  if (remotePosts.length) renderGallery(remotePosts, true);
+};
+
+galleryPrev?.addEventListener("click", () => scrollGallery(-1));
+galleryNext?.addEventListener("click", () => scrollGallery(1));
+galleryViewport?.addEventListener("scroll", () => {
+  window.cancelAnimationFrame(galleryFrame);
+  galleryFrame = window.requestAnimationFrame(updateGalleryPosition);
+}, { passive: true });
+galleryViewport?.addEventListener("keydown", (event) => {
+  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+  event.preventDefault();
+  scrollGallery(event.key === "ArrowLeft" ? -1 : 1);
+});
+galleryDots?.addEventListener("click", (event) => {
+  const dot = event.target.closest("[data-gallery-index]");
+  if (!dot || !galleryTrack) return;
+  const card = galleryTrack.children[Number(dot.dataset.galleryIndex)];
+  card?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest", inline: "start" });
+});
+window.addEventListener("resize", updateGalleryPosition, { passive: true });
+
+loadInstagramGallery().catch((error) => {
+  console.warn("Não foi possível atualizar a galeria do Instagram; exibindo os destaques locais.", error);
+});
+
 const header = document.querySelector("[data-header]");
 const fab = document.querySelector("[data-fab]");
 const heroEl = document.querySelector("#inicio");

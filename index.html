@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#082f30" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'sha256-dxJo9XQZvWdn56R10q6pclzl4Dn+swOeZCeqOYHvqsk='; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self' https://exqprqsnxdyzonkjippe.supabase.co wss://exqprqsnxdyzonkjippe.supabase.co; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'sha256-dxJo9XQZvWdn56R10q6pclzl4Dn+swOeZCeqOYHvqsk='; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.cdninstagram.com https://*.fbcdn.net; media-src 'self'; connect-src 'self' https://exqprqsnxdyzonkjippe.supabase.co wss://exqprqsnxdyzonkjippe.supabase.co; frame-src https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
     <title>Studio B | Beatriz Rogoziz — Práticas Integrativas & Cuidados Corporais</title>
 
     <!-- Favicon -->
@@ -101,11 +101,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=16" />
+    <link rel="stylesheet" href="styles.css?v=17" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" integrity="sha384-UagCvVPT5XXA0Hx+nJYUAGBFseHT9zBgpJMSebsAxl9lciTwbT+39j5VfRjdP5Tp" crossorigin="anonymous" defer></script>
     <script src="supabase-config.js?v=2" defer></script>
-    <script src="config.js?v=8" defer></script>
-    <script src="app.js?v=13" defer></script>
+    <script src="config.js?v=9" defer></script>
+    <script src="app.js?v=14" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Ir para o conteúdo</a>
@@ -132,6 +132,7 @@
         <a href="#espaco">O espaço</a>
         <a href="#cuidados">Cuidados</a>
         <a href="#menu-cuidados">Menu de Cuidados</a>
+        <a href="#galeria">Galeria</a>
         <a href="#unidade-casa-verde">Onde estamos</a>
         <button type="button" class="nav-book" data-booking>Agendar</button>
       </nav>
@@ -241,6 +242,45 @@
           <p class="booking-feedback" role="status" data-booking-feedback></p>
         </div>
       </section>
+
+      <section class="gallery section" id="galeria" aria-labelledby="gallery-title" data-gallery>
+        <header class="gallery-heading reveal">
+          <div>
+            <p class="eyebrow">Galeria</p>
+            <h2 id="gallery-title">Entre no universo<br /><em>Studio B.</em></h2>
+          </div>
+          <div class="gallery-intro">
+            <p>Cuidados, bastidores e momentos do Studio B reunidos em nosso Instagram.</p>
+            <a class="instagram-profile-link" href="https://www.instagram.com/beatrizrogozizribeiro_/" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                <circle cx="12" cy="12" r="4.25"></circle>
+                <circle class="instagram-profile-fill" cx="17.4" cy="6.7" r="1"></circle>
+              </svg>
+              <span>@beatrizrogozizribeiro_</span>
+              <i aria-hidden="true">↗</i>
+            </a>
+          </div>
+        </header>
+
+        <div class="gallery-carousel reveal" aria-roledescription="carrossel" aria-label="Publicações do Instagram do Studio B">
+          <button class="gallery-control gallery-control-prev" type="button" aria-label="Ver publicação anterior" data-gallery-prev>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg>
+          </button>
+          <div class="gallery-viewport" tabindex="0" data-gallery-viewport>
+            <div class="gallery-track" data-gallery-track></div>
+          </div>
+          <button class="gallery-control gallery-control-next" type="button" aria-label="Ver próxima publicação" data-gallery-next>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+          </button>
+        </div>
+
+        <div class="gallery-footer reveal">
+          <div class="gallery-dots" role="group" aria-label="Selecionar publicação" data-gallery-dots></div>
+          <p class="gallery-status" role="status" aria-live="polite" data-gallery-status>Carregando galeria…</p>
+        </div>
+        <noscript><p class="gallery-noscript">Acesse <a href="https://www.instagram.com/beatrizrogozizribeiro_/" target="_blank" rel="noopener noreferrer">o Instagram do Studio B</a> para ver as publicações.</p></noscript>
+      </section>
     </main>
 
     <footer class="footer">
@@ -291,6 +331,7 @@
         <a href="#espaco">O espaço</a>
         <a href="#cuidados">Cuidados</a>
         <a href="#menu-cuidados">Menu de Cuidados</a>
+        <a href="#galeria">Galeria</a>
         <a href="#unidade-casa-verde">Onde estamos</a>
         <a href="gerenciar-agendamento.html">Gerenciar agendamento</a>
         <a href="privacy.html">Privacidade</a>

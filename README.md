@@ -24,6 +24,19 @@ Cada opção de preço pode receber um valor numérico ou um texto como “A con
 
 O frontend usa somente a chave pública do Supabase. As alterações são protegidas por autenticação e Row Level Security; nenhuma chave administrativa fica no site.
 
+## Galeria do Instagram
+
+A seção **Galeria** exibe um carrossel responsivo antes de “Onde estamos”. Enquanto a conexão oficial não estiver ativa, o site usa uma seleção das fotos do Studio B e mantém o acesso direto a `@beatrizrogozizribeiro_`.
+
+Para atualizar automaticamente com as publicações recentes, conecte uma conta profissional do Instagram pela API oficial da Meta e salve o token apenas nos Secrets do Supabase:
+
+```powershell
+npx supabase secrets set --project-ref exqprqsnxdyzonkjippe INSTAGRAM_ACCESS_TOKEN="seu-token" INSTAGRAM_USER_ID="me"
+npx supabase functions deploy instagram-feed --project-ref exqprqsnxdyzonkjippe
+```
+
+Se a configuração da Meta exigir uma versão específica da Graph API, adicione também `INSTAGRAM_GRAPH_VERSION` (por exemplo, `v24.0`). O token nunca deve ser salvo em `config.js`, `supabase-config.js` ou outro arquivo versionado.
+
 ## Agendamento online
 
 O fluxo não exige cadastro do cliente. Ele informa nome, WhatsApp, e-mail, serviço, data e horário. A disponibilidade combina:
@@ -98,6 +111,7 @@ Não foram adicionados credenciais ou depoimentos não fornecidos.
 - `supabase/`: configuração local e migrações do banco;
 - `supabase/functions/booking-api/`: disponibilidade, integração Google, e-mails e cancelamentos;
 - `supabase/functions/booking-reminders/`: executor interno e idempotente de lembretes;
+- `supabase/functions/instagram-feed/`: leitura segura das publicações recentes pela API oficial do Instagram;
 - `scripts/google-oauth-helper.mjs`: autorização local da conta do Studio B;
 - `tests/`: cenários automatizados de contrato, regras, segurança e smoke de produção;
 - `ROADMAP.md`: sequência de evolução e registro de entregas;

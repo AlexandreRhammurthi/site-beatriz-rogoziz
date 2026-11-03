@@ -34,6 +34,9 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   const homeHtml = await home.text();
   assert.match(homeHtml, />Agendar online</);
   assert.match(homeHtml, /data-whatsapp/);
+  assert.match(homeHtml, /id="galeria"/);
+  assert.match(homeHtml, /data-gallery-viewport/);
+  assert.match(homeHtml, /instagram\.com\/beatrizrogozizribeiro_\//);
   assert.match(homeHtml, /rel="canonical" href="https:\/\/www\.beatrizrogoziz\.com\.br\/"/);
   assert.match(await booking.text(), /href="privacy\.html"/);
   assert.match(await (await fetch(`${baseUrl}/booking.html?v=${stamp + 1}`)).text(), /data-available-dates/);
