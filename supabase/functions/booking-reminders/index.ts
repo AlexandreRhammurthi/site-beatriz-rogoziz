@@ -84,7 +84,7 @@ const reminderEmail = (name: string, service: string, startsAt: string) => `
       dateStyle: "full",
       timeStyle: "short",
     }).format(new Date(startsAt)))}<br>${html(STUDIO_ADDRESS)}</p>
-    <p><a href="${html(`${SITE_URL}/manage-booking.html`)}" style="display:inline-block;background:#0b3b3c;color:white;padding:12px 18px;text-decoration:none">Gerenciar agendamento</a></p>
+    <p><a href="${html(`${SITE_URL}/gerenciar-agendamento.html`)}" style="display:inline-block;background:#0b3b3c;color:white;padding:12px 18px;text-decoration:none">Gerenciar agendamento</a></p>
     <p style="font-size:12px;color:#687675">Se precisar recuperar o acesso, use o mesmo e-mail, WhatsApp, data e horário informados no agendamento.</p>
   </div>`;
 

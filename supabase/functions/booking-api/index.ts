@@ -1082,7 +1082,7 @@ Deno.serve(async (request) => {
         throw insertError;
       }
 
-      const manageUrl = `${SITE_URL}/manage-booking.html#token=${token}`;
+      const manageUrl = `${SITE_URL}/gerenciar-agendamento.html#token=${token}`;
       try {
         const event = await createGoogleEvent(
           appointment,
@@ -1241,7 +1241,7 @@ Deno.serve(async (request) => {
         throw updateError;
       }
 
-      const manageUrl = `${SITE_URL}/manage-booking.html#token=${token}`;
+      const manageUrl = `${SITE_URL}/gerenciar-agendamento.html#token=${token}`;
       try {
         if (appointment.google_event_id) {
           await updateGoogleEvent(
@@ -1332,7 +1332,7 @@ Deno.serve(async (request) => {
           error: "A confirmação já foi enviada recentemente. Aguarde 10 minutos para solicitar novamente.",
         }, 429);
       }
-      const manageUrl = `${SITE_URL}/manage-booking.html#token=${token}`;
+      const manageUrl = `${SITE_URL}/gerenciar-agendamento.html#token=${token}`;
       try {
         await sendEmail(
           appointment.customer_email,
@@ -1570,7 +1570,7 @@ Deno.serve(async (request) => {
         return json(origin, { error: "Código inválido ou expirado." }, 400);
       }
       const token = randomToken();
-      const manageUrl = `${SITE_URL}/manage-booking.html#token=${token}`;
+      const manageUrl = `${SITE_URL}/gerenciar-agendamento.html#token=${token}`;
       const usedAt = new Date().toISOString();
       await Promise.all([
         admin.from("appointments").update({

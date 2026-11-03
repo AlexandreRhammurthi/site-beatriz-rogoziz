@@ -4,8 +4,9 @@ import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
-const [home, admin, booking, manage, privacy, terms, robots, sitemap, worker] = await Promise.all([
+const [home, admin, booking, manage, secureManage, privacy, terms, robots, sitemap, worker] = await Promise.all([
   read("index.html"), read("admin.html"), read("booking.html"), read("manage-booking.html"),
+  read("gerenciar-agendamento.html"),
   read("privacy.html"), read("terms.html"), read("robots.txt"), read("sitemap.xml"), read("sw.js")
 ]);
 
@@ -34,13 +35,14 @@ test("recursos críticos têm estabilidade visual, cache e carregamento controla
 });
 
 test("páginas possuem CSP e áreas privadas permanecem noindex", () => {
-  for (const page of [home, admin, booking, manage, privacy, terms]) {
+  for (const page of [home, admin, booking, manage, secureManage, privacy, terms]) {
     assert.match(page, /Content-Security-Policy/);
     assert.match(page, /object-src 'none'/);
     assert.match(page, /base-uri 'self'/);
   }
   assert.match(admin, /noindex, nofollow/);
   assert.match(manage, /noindex, nofollow/);
+  assert.match(secureManage, /noindex, nofollow/);
   assert.match(booking, /noindex/);
 });
 

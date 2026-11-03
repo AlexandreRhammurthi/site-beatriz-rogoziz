@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const html = await readFile(new URL("../manage-booking.html", import.meta.url), "utf8");
+const secureHtml = await readFile(new URL("../gerenciar-agendamento.html", import.meta.url), "utf8");
 const js = await readFile(new URL("../manage-booking.js", import.meta.url), "utf8");
 const api = await readFile(new URL("../supabase/functions/booking-api/index.ts", import.meta.url), "utf8");
 const migration = await readFile(new URL("../supabase/migrations/20261102120000_booking_recovery_confirmation.sql", import.meta.url), "utf8");
@@ -12,6 +13,8 @@ test("cancelamento exige confirmação explícita com o resumo do atendimento", 
   assert.match(html, /Confirmo que desejo cancelar este atendimento/);
   assert.match(js, /cancelConfirmForm\.elements\.understood\.checked = false/);
   assert.doesNotMatch(js, /confirm\("Deseja realmente cancelar/);
+  assert.match(secureHtml, /data-cancel-confirm/);
+  assert.match(secureHtml, /manage-booking\.js\?v=4/);
 });
 
 test("banco é a fonte do cancelamento antes da integração externa", () => {

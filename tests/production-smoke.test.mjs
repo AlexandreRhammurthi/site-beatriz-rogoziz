@@ -11,10 +11,11 @@ const supabaseUrl = configSource.match(/url:\s*"([^"]+)"/)?.[1];
 
 test("site publicado expõe o contrato atualizado", { skip: !run }, async () => {
   const stamp = Date.now();
-  const [home, booking, admin, manage, servicesFaq, scheduleFaq, robots, sitemap] = await Promise.all([
+  const [home, booking, admin, manage, legacyManage, servicesFaq, scheduleFaq, robots, sitemap] = await Promise.all([
     fetch(`${baseUrl}/?v=${stamp}`),
     fetch(`${baseUrl}/booking.html?v=${stamp}`),
     fetch(`${baseUrl}/admin.html?v=${stamp}`),
+    fetch(`${baseUrl}/gerenciar-agendamento.html?v=${stamp}`),
     fetch(`${baseUrl}/manage-booking.html?v=${stamp}`),
     fetch(`${baseUrl}/admin-faq-servicos.html?v=${stamp}`),
     fetch(`${baseUrl}/admin-faq-agenda.html?v=${stamp}`),
@@ -25,6 +26,7 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.equal(booking.status, 200);
   assert.equal(admin.status, 200);
   assert.equal(manage.status, 200);
+  assert.equal(legacyManage.status, 200);
   assert.equal(servicesFaq.status, 200);
   assert.equal(scheduleFaq.status, 200);
   assert.equal(robots.status, 200);
@@ -57,8 +59,8 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-reset-password-form/);
   assert.match(adminHtml, /data-package-form/);
   assert.match(adminHtml, /data-packages-list/);
-  assert.match(await manage.text(), /data-reschedule-form/);
-  const manageHtml = await (await fetch(`${baseUrl}/manage-booking.html?v=${stamp + 2}`)).text();
+  const manageHtml = await manage.text();
+  assert.match(manageHtml, /data-reschedule-form/);
   assert.match(manageHtml, /data-cancel-confirm/);
   assert.match(manageHtml, /data-resend-confirmation/);
   assert.doesNotMatch(manageHtml, /name="time"/);
