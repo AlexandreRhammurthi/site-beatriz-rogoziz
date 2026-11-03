@@ -26,9 +26,7 @@ O frontend usa somente a chave pública do Supabase. As alterações são proteg
 
 ## Galeria do Instagram
 
-A seção **Galeria** exibe um carrossel responsivo antes de “Onde estamos”. Com a conexão oficial ativa, as publicações são carregadas em páginas de 12 itens e novas páginas aparecem automaticamente conforme o visitante avança, até o fim do histórico disponibilizado pela API. Enquanto a conexão não estiver ativa, o site usa uma seleção das fotos do Studio B e mantém o acesso direto a `@beatrizrogozizribeiro_`.
-
-A API do Instagram não permite definir a ordem dos resultados. Por isso, publicações fixadas podem não aparecer na mesma posição exibida pelo aplicativo do Instagram; para reproduzir exatamente o topo do perfil, essas publicações precisam ser cadastradas manualmente como destaques.
+A seção **Galeria** exibe um carrossel responsivo antes de “Onde estamos”. Enquanto a conexão oficial não estiver ativa, o site usa uma seleção das fotos do Studio B e mantém o acesso direto a `@beatrizrogozizribeiro_`.
 
 Para atualizar automaticamente com as publicações recentes, conecte uma conta profissional do Instagram pela API oficial da Meta e salve o token apenas nos Secrets do Supabase:
 

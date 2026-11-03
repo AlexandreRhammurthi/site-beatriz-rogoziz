@@ -1,7 +1,7 @@
-const CACHE_NAME = "studio-b-public-v3";
+const CACHE_NAME = "studio-b-public-v2";
 const PRECACHE = [
   "styles.css?v=17",
-  "app.js?v=15",
+  "app.js?v=14",
   "favicon.svg",
   "assets/banner.jpeg"
 ];
