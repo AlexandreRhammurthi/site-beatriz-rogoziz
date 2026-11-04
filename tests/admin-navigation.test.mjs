@@ -9,11 +9,13 @@ test("painel inicia com escolhas separadas para conteúdo e agenda", () => {
   assert.match(adminHtml, /data-admin-view="home"/);
   assert.match(adminHtml, /data-admin-target="services"/);
   assert.match(adminHtml, /data-admin-target="schedule-menu"/);
+  assert.match(adminHtml, /data-admin-target="instagram"/);
   assert.match(adminHtml, /Serviços e valores/);
 });
 
 test("agenda possui submenu para configuração e agendamentos", () => {
   assert.match(adminHtml, /data-admin-view="schedule-menu"/);
+  assert.match(adminHtml, /data-admin-view="instagram"/);
   assert.match(adminHtml, /data-admin-target="schedule-settings"/);
   assert.match(adminHtml, /data-admin-target="appointments"/);
   assert.match(adminHtml, /Administrar a agenda/);

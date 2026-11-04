@@ -12,11 +12,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="admin.css?v=16" />
+    <link rel="stylesheet" href="admin.css?v=17" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" integrity="sha384-UagCvVPT5XXA0Hx+nJYUAGBFseHT9zBgpJMSebsAxl9lciTwbT+39j5VfRjdP5Tp" crossorigin="anonymous" defer></script>
-    <script src="supabase-config.js?v=2" defer></script>
+    <script src="supabase-config.js?v=3" defer></script>
     <script src="admin-utils.js?v=4" defer></script>
-    <script src="admin.js?v=17" defer></script>
+    <script src="admin.js?v=18" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -142,6 +142,14 @@
               <span class="option-copy">
                 <strong>Visão operacional</strong>
                 <span>Acompanhe agenda, demanda, comparecimento e pacotes que precisam de atenção.</span>
+              </span>
+              <span class="option-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="admin-option-card" type="button" data-admin-target="instagram">
+              <span class="option-index" aria-hidden="true">06</span>
+              <span class="option-copy">
+                <strong>Instagram</strong>
+                <span>Conecte, troque ou desconecte a conta usada pela galeria do site.</span>
               </span>
               <span class="option-arrow" aria-hidden="true">→</span>
             </button>
@@ -412,6 +420,35 @@
               <section class="operations-panel operations-alert-panel"><h3>Pacotes que pedem atenção</h3><div data-operations-alerts></div></section>
             </div>
             <p class="operations-footnote">Os indicadores financeiros não são exibidos porque o painel ainda não registra pagamentos confirmados.</p>
+          </section>
+        </section>
+
+        <section class="admin-view" data-admin-view="instagram" aria-labelledby="instagram-admin-title" hidden>
+          <div class="view-heading">
+            <button class="view-back" type="button" data-admin-target="home">← Voltar ao início</button>
+            <div>
+              <p class="eyebrow">Galeria do site</p>
+              <h1 id="instagram-admin-title" tabindex="-1">Conexão com o Instagram</h1>
+              <p>Autorize a conta profissional que fornecerá as publicações da Galeria. A senha e o token nunca aparecem neste painel.</p>
+            </div>
+          </div>
+
+          <section class="booking-settings-card instagram-connection-card" aria-labelledby="instagram-connection-title">
+            <div class="settings-heading">
+              <div>
+                <p class="eyebrow">Conta autorizada</p>
+                <h2 id="instagram-connection-title">Integração da Meta</h2>
+              </div>
+              <span class="connection-badge" data-instagram-badge>Consultando</span>
+            </div>
+            <div class="instagram-account" data-instagram-account aria-live="polite">
+              <p>Consultando o estado da conexão…</p>
+            </div>
+            <div class="instagram-actions">
+              <button class="button primary" type="button" data-instagram-connect>Conectar conta</button>
+              <button class="button secondary" type="button" data-instagram-disconnect hidden>Desconectar</button>
+            </div>
+            <p class="instagram-safety-note">Ao trocar ou desconectar a conta, a Galeria continua exibindo as 12 imagens locais até que uma nova autorização esteja ativa.</p>
           </section>
         </section>
 

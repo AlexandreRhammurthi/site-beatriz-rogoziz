@@ -327,8 +327,22 @@ const renderGallery = (posts, live = false) => {
   window.requestAnimationFrame(updateGalleryPosition);
 };
 
-const loadInstagramGallery = () => {
+const loadInstagramGallery = async () => {
   if (galleryFallbackPosts.length) renderGallery(galleryFallbackPosts, false);
+  const settings = window.STUDIO_B_SUPABASE;
+  if (!settings?.instagramFeedUrl || !settings?.publishableKey) return;
+  try {
+    const response = await fetch(settings.instagramFeedUrl, {
+      headers: { apikey: settings.publishableKey, Accept: "application/json" },
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!response.ok) return;
+    const result = await response.json();
+    const remotePosts = Array.isArray(result.items) ? result.items.slice(0, 12) : [];
+    if (result.connected && remotePosts.length) renderGallery(remotePosts, true);
+  } catch (error) {
+    console.info("Galeria real indisponível; mantendo as imagens locais.");
+  }
 };
 
 galleryPrev?.addEventListener("click", () => scrollGallery(-1));

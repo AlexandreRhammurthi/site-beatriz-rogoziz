@@ -7,6 +7,8 @@ const baseUrl = "https://www.beatrizrogoziz.com.br";
 const configSource = await readFile(new URL("../supabase-config.js", import.meta.url), "utf8");
 const key = configSource.match(/publishableKey:\s*"([^"]+)"/)?.[1];
 const apiUrl = configSource.match(/bookingApiUrl:\s*"([^"]+)"/)?.[1];
+const instagramFeedUrl = configSource.match(/instagramFeedUrl:\s*"([^"]+)"/)?.[1];
+const instagramAdminUrl = configSource.match(/instagramAdminUrl:\s*"([^"]+)"/)?.[1];
 const supabaseUrl = configSource.match(/url:\s*"([^"]+)"/)?.[1];
 
 test("site publicado expõe o contrato atualizado", { skip: !run }, async () => {
@@ -50,6 +52,8 @@ test("site publicado expõe o contrato atualizado", { skip: !run }, async () => 
   assert.match(adminHtml, /data-admin-target="packages"/);
   assert.match(adminHtml, /data-admin-target="history"/);
   assert.match(adminHtml, /data-admin-target="operations-dashboard"/);
+  assert.match(adminHtml, /data-admin-target="instagram"/);
+  assert.match(adminHtml, /data-admin-view="instagram"/);
   assert.match(adminHtml, /data-operations-metrics/);
   assert.match(adminHtml, /data-history-list/);
   assert.match(adminHtml, /href="admin-faq-servicos\.html"/);
@@ -111,6 +115,23 @@ test("ações administrativas da agenda rejeitam chamadas anônimas", { skip: !r
     body: JSON.stringify({ action: "admin-config" })
   });
   assert.equal(response.status, 401);
+});
+
+test("integração pública do Instagram mantém fallback seguro", { skip: !run }, async () => {
+  const response = await fetch(instagramFeedUrl, { headers: { apikey: key, Origin: baseUrl } });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(typeof result.connected, "boolean");
+  assert.ok(Array.isArray(result.items));
+});
+
+test("gestão do Instagram rejeita acesso anônimo", { skip: !run }, async () => {
+  const response = await fetch(instagramAdminUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: key, Origin: baseUrl },
+    body: JSON.stringify({ action: "status" })
+  });
+  assert.equal(response.status, 403);
 });
 
 test("reagendamento rejeita link inválido sem alterar dados", { skip: !run }, async () => {
@@ -176,6 +197,15 @@ test("histórico administrativo não pode ser consultado anonimamente", { skip: 
     headers: { apikey: key }
   });
   assert.ok([401, 403].includes(response.status), `status inesperado: ${response.status}`);
+});
+
+test("tokens e estados OAuth do Instagram não são públicos", { skip: !run }, async () => {
+  for (const table of ["instagram_connections", "instagram_oauth_states"]) {
+    const response = await fetch(`${supabaseUrl}/rest/v1/${table}?select=*&limit=1`, {
+      headers: { apikey: key }
+    });
+    assert.ok([401, 403].includes(response.status), `${table}: status inesperado ${response.status}`);
+  }
 });
 
 test("executor de lembretes rejeita chamadas públicas", { skip: !run }, async () => {

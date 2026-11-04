@@ -2,7 +2,8 @@ window.STUDIO_B_SUPABASE = {
   url: "https://exqprqsnxdyzonkjippe.supabase.co",
   publishableKey: "sb_publishable_ouum5mWYL2DQ-nw9q76tqg_Q97Pv04s",
   bookingApiUrl: "https://exqprqsnxdyzonkjippe.supabase.co/functions/v1/booking-api",
-  instagramFeedUrl: "https://exqprqsnxdyzonkjippe.supabase.co/functions/v1/instagram-feed"
+  instagramFeedUrl: "https://exqprqsnxdyzonkjippe.supabase.co/functions/v1/instagram-feed",
+  instagramAdminUrl: "https://exqprqsnxdyzonkjippe.supabase.co/functions/v1/instagram-admin"
 };
 
 window.createStudioSupabaseClient = () => {

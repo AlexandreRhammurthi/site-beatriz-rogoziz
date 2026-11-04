@@ -393,6 +393,9 @@ verify_jwt = false
 [functions.instagram-feed]
 verify_jwt = false
 
+[functions.instagram-admin]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

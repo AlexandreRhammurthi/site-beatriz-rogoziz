@@ -147,6 +147,13 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
 .settings-heading p:last-child { max-width: 680px; color: var(--muted); line-height: 1.65; }
 .connection-badge { flex: 0 0 auto; padding: .45rem .7rem; border: 1px solid rgba(183,154,93,.45); color: var(--gold); font-size: .58rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
 .connection-badge.connected { border-color: var(--petrol); background: var(--petrol); color: white; }
+.connection-badge.pending { border-color: var(--gold); color: var(--gold); }
+.instagram-account { margin: 1.5rem 0; padding: 1.25rem; border: 1px solid var(--line); background: #f4efe4; }
+.instagram-account h3 { margin: 0 0 .35rem; font-family: var(--serif); font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 500; }
+.instagram-account p { margin: .35rem 0 0; color: var(--muted); font-size: .75rem; line-height: 1.7; }
+.instagram-account a { color: var(--petrol); font-weight: 600; text-underline-offset: .2rem; }
+.instagram-actions { display: flex; flex-wrap: wrap; gap: .8rem; }
+.instagram-safety-note { max-width: 760px; margin: 1.2rem 0 0; padding-left: 1rem; border-left: 2px solid var(--gold); color: var(--muted); font-size: .7rem; line-height: 1.7; }
 .settings-grid { padding-bottom: 1rem; }
 .settings-grid .optional { color: var(--muted); font-size: .55rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
 .availability-list { display: grid; gap: .7rem; }
@@ -323,6 +330,7 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px r
   .dashboard-heading { align-items: stretch; flex-direction: column; }
   .heading-actions { justify-content: stretch; }
   .heading-actions .button { flex: 1 1 100%; }
+  .instagram-actions { align-items: stretch; flex-direction: column; }
   .fields-grid, .price-row { grid-template-columns: 1fr; }
   .manual-booking-fields { grid-template-columns: 1fr; }
   .admin-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }

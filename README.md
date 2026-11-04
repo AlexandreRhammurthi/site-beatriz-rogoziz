@@ -26,16 +26,19 @@ O frontend usa somente a chave pública do Supabase. As alterações são proteg
 
 ## Galeria do Instagram
 
-A seção **Galeria** exibe um carrossel responsivo com 12 imagens locais antes de “Onde estamos” e mantém o acesso direto a `@beatrizrogozizribeiro_`. A exibição não depende da disponibilidade do Instagram ou de credenciais externas.
+A seção **Galeria** exibe um carrossel responsivo antes de “Onde estamos” e mantém o acesso direto ao perfil conectado. Quando a Meta não responde ou não há uma conta autorizada, o site preserva as 12 imagens locais como fallback.
 
-Para atualizar automaticamente com as publicações recentes, conecte uma conta profissional do Instagram pela API oficial da Meta e salve o token apenas nos Secrets do Supabase:
+O administrador pode conectar, trocar ou desconectar a conta em **Painel administrativo → Instagram**. O OAuth usa o escopo `instagram_business_basic`, estado descartável e token cifrado no banco; o token nunca é devolvido ao navegador.
+
+Antes do primeiro uso, configure uma única vez o aplicativo Meta e os Secrets abaixo:
 
 ```powershell
-npx supabase secrets set --project-ref exqprqsnxdyzonkjippe INSTAGRAM_ACCESS_TOKEN="seu-token" INSTAGRAM_USER_ID="me"
-npx supabase functions deploy instagram-feed --project-ref exqprqsnxdyzonkjippe
+npx supabase secrets set --remote=exqprqsnxdyzonkjippe INSTAGRAM_CLIENT_ID="id-do-app" INSTAGRAM_CLIENT_SECRET="segredo-do-app" INSTAGRAM_REDIRECT_URI="https://exqprqsnxdyzonkjippe.supabase.co/functions/v1/instagram-admin"
+npx supabase functions deploy instagram-admin --remote=exqprqsnxdyzonkjippe
+npx supabase functions deploy instagram-feed --remote=exqprqsnxdyzonkjippe
 ```
 
-Se a configuração da Meta exigir uma versão específica da Graph API, adicione também `INSTAGRAM_GRAPH_VERSION` (por exemplo, `v24.0`). O token nunca deve ser salvo em `config.js`, `supabase-config.js` ou outro arquivo versionado.
+Cadastre exatamente a mesma URL em **Valid OAuth Redirect URIs** no aplicativo Meta. Se a configuração exigir uma versão específica da Graph API, adicione `INSTAGRAM_GRAPH_VERSION`. É possível fornecer uma chave dedicada em `INSTAGRAM_TOKEN_ENCRYPTION_KEY`; sem ela, o backend usa a chave privada já existente com separação criptográfica de contexto. Credenciais e tokens nunca devem ser salvos em arquivos versionados.
 
 ## Agendamento online
 

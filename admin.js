@@ -31,6 +31,10 @@ const operationsMetrics = document.querySelector("[data-operations-metrics]");
 const operationsUpcoming = document.querySelector("[data-operations-upcoming]");
 const operationsDemand = document.querySelector("[data-operations-demand]");
 const operationsAlerts = document.querySelector("[data-operations-alerts]");
+const instagramBadge = document.querySelector("[data-instagram-badge]");
+const instagramAccount = document.querySelector("[data-instagram-account]");
+const instagramConnectButton = document.querySelector("[data-instagram-connect]");
+const instagramDisconnectButton = document.querySelector("[data-instagram-disconnect]");
 const adminUtils = window.STUDIO_B_ADMIN_UTILS;
 const weekdayLabels = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
 
@@ -51,8 +55,10 @@ let packagePrices = [];
 let historyCache = [];
 let passwordRecoveryMode = false;
 let currentAdminView = "home";
+let instagramConnection = null;
 const loadedAdminViews = new Set();
 const callbackUrl = () => `${window.location.origin}${window.location.pathname}`;
+let instagramReturn = new URLSearchParams(window.location.search).get("instagram");
 
 const auditTableLabels = {
   services: "Serviço",
@@ -148,6 +154,58 @@ const callBookingApi = async (action, data = {}, authenticated = false) => {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error || "Não foi possível consultar a agenda.");
   return payload;
+};
+
+const callInstagramAdmin = async (action) => {
+  const { data: sessionData, error: sessionError } = await client.auth.getSession();
+  if (sessionError || !sessionData.session?.access_token) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
+  const response = await fetch(window.STUDIO_B_SUPABASE.instagramAdminUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: window.STUDIO_B_SUPABASE.publishableKey,
+      Authorization: `Bearer ${sessionData.session.access_token}`
+    },
+    body: JSON.stringify({ action })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "Não foi possível administrar a conexão com o Instagram.");
+  return payload;
+};
+
+const formatInstagramDate = (value) => value
+  ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(value))
+  : "Não informada";
+
+const renderInstagramConnection = (result) => {
+  instagramConnection = result;
+  const connected = Boolean(result?.connected && result.account);
+  instagramBadge.textContent = connected ? "Conta conectada" : result?.configured ? "Sem conexão" : "Configuração pendente";
+  instagramBadge.classList.toggle("connected", connected);
+  instagramBadge.classList.toggle("pending", !connected);
+  instagramConnectButton.textContent = connected ? "Trocar conta" : "Conectar conta";
+  instagramConnectButton.disabled = !result?.configured;
+  instagramDisconnectButton.hidden = !connected;
+
+  if (connected) {
+    const account = result.account;
+    instagramAccount.innerHTML = `
+      <h3>@${escapeHTML(account.username)}</h3>
+      ${account.name ? `<p>${escapeHTML(account.name)}</p>` : ""}
+      <p><a href="${escapeHTML(account.profile_url)}" target="_blank" rel="noopener noreferrer">Abrir perfil no Instagram</a></p>
+      <p>Conectada em ${escapeHTML(formatInstagramDate(account.connected_at))}. Autorização válida até ${escapeHTML(formatInstagramDate(account.expires_at))}; a renovação é automática.</p>
+    `;
+    return;
+  }
+
+  instagramAccount.innerHTML = result?.configured
+    ? "<h3>Nenhuma conta conectada</h3><p>Use o botão abaixo para autorizar uma conta profissional do Instagram.</p>"
+    : "<h3>Aplicativo Meta ainda não configurado</h3><p>O módulo está protegido e pronto. Para liberar o botão, cadastre uma única vez as credenciais do aplicativo Meta nos Secrets do Supabase.</p>";
+};
+
+const loadInstagramConnection = async () => {
+  const result = await callInstagramAdmin("status");
+  renderInstagramConnection(result);
 };
 
 const addPriceRow = (container, price = {}) => {
@@ -984,6 +1042,11 @@ const loadAdminView = async (view) => {
     loadedAdminViews.add(view);
     return;
   }
+  if (view === "instagram") {
+    await loadInstagramConnection();
+    loadedAdminViews.add(view);
+    return;
+  }
   if (loadedAdminViews.has(view)) return;
   if (view === "services") await loadServices();
   if (view === "packages") await loadPackages();
@@ -1014,7 +1077,18 @@ const showAdminView = async (view, { focus = true } = {}) => {
 const showDashboard = async () => {
   const isFirstEntry = dashboard.hidden;
   setView("dashboard");
-  await showAdminView(isFirstEntry ? "home" : currentAdminView, { focus: false });
+  const destination = isFirstEntry && instagramReturn ? "instagram" : (isFirstEntry ? "home" : currentAdminView);
+  await showAdminView(destination, { focus: false });
+  if (instagramReturn) {
+    showStatus(instagramReturn === "connected"
+      ? "Conta do Instagram conectada com sucesso."
+      : "A autorização do Instagram não foi concluída.", instagramReturn !== "connected");
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("instagram");
+    cleanUrl.searchParams.delete("reason");
+    window.history.replaceState({}, "", cleanUrl);
+    instagramReturn = null;
+  }
 };
 
 const handleSession = async (session) => {
@@ -1162,6 +1236,39 @@ dashboard?.addEventListener("click", (event) => {
   const navigationButton = event.target.closest("[data-admin-target]");
   if (!navigationButton) return;
   showAdminView(navigationButton.dataset.adminTarget);
+});
+
+instagramConnectButton?.addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  setBusy(button, true);
+  try {
+    const result = await callInstagramAdmin("connect");
+    if (!result.authorization_url) throw new Error("A Meta não retornou o endereço de autorização.");
+    const authorizationUrl = new URL(result.authorization_url);
+    if (authorizationUrl.protocol !== "https:" || authorizationUrl.hostname !== "www.instagram.com") {
+      throw new Error("O endereço de autorização retornado é inválido.");
+    }
+    window.location.assign(authorizationUrl.toString());
+  } catch (error) {
+    setBusy(button, false);
+    showStatus(error.message || "Não foi possível iniciar a autorização do Instagram.", true);
+  }
+});
+
+instagramDisconnectButton?.addEventListener("click", async (event) => {
+  if (!instagramConnection?.connected) return;
+  if (!window.confirm("Desconectar esta conta? A Galeria usará as 12 imagens locais até uma nova conexão.")) return;
+  const button = event.currentTarget;
+  setBusy(button, true);
+  try {
+    await callInstagramAdmin("disconnect");
+    await loadInstagramConnection();
+    showStatus("Conta do Instagram desconectada.");
+  } catch (error) {
+    showStatus(error.message || "Não foi possível desconectar a conta.", true);
+  } finally {
+    setBusy(button, false);
+  }
 });
 
 historyFilter?.addEventListener("change", renderHistory);

@@ -37,12 +37,14 @@ test("carrossel é acessível, responsivo e aponta para o Instagram informado", 
   assert.match(app, /prefers-reduced-motion/);
 });
 
-test("galeria exibe 12 imagens locais sem depender da API do Instagram", () => {
+test("galeria preserva 12 imagens locais e só ativa conteúdo real válido", () => {
   assert.match(config, /fallbackPosts/);
   assert.match(config, /assets\/banner\.jpeg/);
   assert.equal((config.match(/image:\s*"assets\//g) || []).length, 12);
   assert.match(config, /assets\/gallery-video-08\.jpeg/);
-  assert.doesNotMatch(app, /fetch\(settings\.instagramFeedUrl/);
+  assert.match(app, /fetch\(settings\.instagramFeedUrl/);
+  assert.match(app, /AbortSignal\.timeout\(6000\)/);
+  assert.match(app, /result\.connected && remotePosts\.length/);
   assert.match(app, /renderGallery\(galleryFallbackPosts, false\)/);
   assert.doesNotMatch(supabaseConfig, /INSTAGRAM_ACCESS_TOKEN/);
   assert.doesNotMatch(config, /INSTAGRAM_ACCESS_TOKEN/);
