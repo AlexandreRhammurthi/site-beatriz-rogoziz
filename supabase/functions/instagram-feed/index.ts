@@ -18,6 +18,7 @@ const INSTAGRAM_TOKEN_ENCRYPTION_KEY = Deno.env.get("INSTAGRAM_TOKEN_ENCRYPTION_
 const LEGACY_INSTAGRAM_ACCESS_TOKEN = Deno.env.get("INSTAGRAM_ACCESS_TOKEN") || "";
 const LEGACY_INSTAGRAM_USER_ID = Deno.env.get("INSTAGRAM_USER_ID") || "me";
 const INSTAGRAM_GRAPH_VERSION = (Deno.env.get("INSTAGRAM_GRAPH_VERSION") || "").replace(/^\/+|\/+$/g, "");
+const META_GRAPH_VERSION = (Deno.env.get("META_GRAPH_VERSION") || "v26.0").replace(/^\/+|\/+$/g, "");
 const PROFILE_URL = "https://www.instagram.com/beatrizrogozizribeiro_/";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -65,6 +66,7 @@ const isHttpsUrl = (value: unknown) => {
 };
 
 type StoredConnection = {
+  auth_method?: "instagram_login" | "unified_login";
   instagram_user_id: string;
   username: string;
   token_ciphertext: string;
@@ -76,10 +78,12 @@ const graphRoot = () => INSTAGRAM_GRAPH_VERSION
   ? `https://graph.instagram.com/${INSTAGRAM_GRAPH_VERSION}`
   : "https://graph.instagram.com";
 
+const metaGraphRoot = () => `https://graph.facebook.com/${META_GRAPH_VERSION}`;
+
 const readConnection = async () => {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !INSTAGRAM_TOKEN_ENCRYPTION_KEY) return null;
   const { data, error } = await admin.from("instagram_connections")
-    .select("instagram_user_id,username,token_ciphertext,token_iv,token_expires_at")
+    .select("auth_method,instagram_user_id,username,token_ciphertext,token_iv,token_expires_at")
     .eq("id", true)
     .maybeSingle();
   if (error || !data) return null;
@@ -93,6 +97,7 @@ const readConnection = async () => {
 };
 
 const refreshTokenIfNeeded = async (stored: Awaited<ReturnType<typeof readConnection>>) => {
+  if (stored?.connection.auth_method === "unified_login") return stored;
   if (!stored?.connection.token_expires_at) return stored;
   const refreshAt = new Date(stored.connection.token_expires_at).getTime() - 7 * 24 * 60 * 60 * 1000;
   if (Date.now() < refreshAt) return stored;
@@ -145,7 +150,8 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const endpoint = new URL(`${graphRoot()}/${encodeURIComponent(instagramUserId)}/media`);
+    const apiRoot = stored?.connection.auth_method === "unified_login" ? metaGraphRoot() : graphRoot();
+    const endpoint = new URL(`${apiRoot}/${encodeURIComponent(instagramUserId)}/media`);
     endpoint.searchParams.set("fields", "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp");
     endpoint.searchParams.set("limit", "12");
     endpoint.searchParams.set("access_token", accessToken);

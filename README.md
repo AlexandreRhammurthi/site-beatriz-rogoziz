@@ -28,17 +28,17 @@ O frontend usa somente a chave pública do Supabase. As alterações são proteg
 
 A seção **Galeria** exibe um carrossel responsivo antes de “Onde estamos” e mantém o acesso direto ao perfil conectado. Quando a Meta não responde ou não há uma conta autorizada, o site preserva as 12 imagens locais como fallback.
 
-O administrador pode conectar, trocar ou desconectar a conta em **Painel administrativo → Instagram**. O OAuth usa o escopo `instagram_business_basic`, estado descartável e token cifrado no banco; o token nunca é devolvido ao navegador.
+O administrador pode conectar, trocar ou desconectar a conta em **Painel administrativo → Instagram**. A integração usa o **Meta Unified Login**, com a permissão mínima `instagram_basic` configurada no caso de uso, estado OAuth descartável e token cifrado no banco; o token nunca é devolvido ao navegador.
 
 Antes do primeiro uso, configure uma única vez o aplicativo Meta e os Secrets abaixo:
 
 ```powershell
-npx supabase secrets set --remote=exqprqsnxdyzonkjippe INSTAGRAM_CLIENT_ID="id-do-app" INSTAGRAM_CLIENT_SECRET="segredo-do-app" INSTAGRAM_REDIRECT_URI="https://exqprqsnxdyzonkjippe.supabase.co/functions/v1/instagram-admin"
+npx supabase secrets set --remote=exqprqsnxdyzonkjippe META_APP_ID="1748052449612666" META_APP_SECRET="segredo-do-app" INSTAGRAM_CONFIG_ID="1402887921834763" INSTAGRAM_REDIRECT_URI="https://exqprqsnxdyzonkjippe.supabase.co/functions/v1/instagram-admin"
 npx supabase functions deploy instagram-admin --remote=exqprqsnxdyzonkjippe
 npx supabase functions deploy instagram-feed --remote=exqprqsnxdyzonkjippe
 ```
 
-Cadastre exatamente a mesma URL em **Valid OAuth Redirect URIs** no aplicativo Meta. Se a configuração exigir uma versão específica da Graph API, adicione `INSTAGRAM_GRAPH_VERSION`. É possível fornecer uma chave dedicada em `INSTAGRAM_TOKEN_ENCRYPTION_KEY`; sem ela, o backend usa a chave privada já existente com separação criptográfica de contexto. Credenciais e tokens nunca devem ser salvos em arquivos versionados.
+Cadastre exatamente a mesma URL em **URL de redirecionamento** da configuração do Unified Login. A versão da API pode ser definida com `META_GRAPH_VERSION` (padrão `v26.0`). É possível fornecer uma chave dedicada em `INSTAGRAM_TOKEN_ENCRYPTION_KEY`; sem ela, o backend usa a chave privada já existente com separação criptográfica de contexto. O `META_APP_SECRET` deve ser colado diretamente nos Secrets do Supabase e nunca salvo em arquivos versionados ou enviado por chat.
 
 ## Agendamento online
 

@@ -13,11 +13,12 @@ const ALLOWED_ORIGINS = new Set([
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const INSTAGRAM_CLIENT_ID = Deno.env.get("INSTAGRAM_CLIENT_ID") || "";
-const INSTAGRAM_CLIENT_SECRET = Deno.env.get("INSTAGRAM_CLIENT_SECRET") || "";
+const META_APP_ID = Deno.env.get("META_APP_ID") || Deno.env.get("INSTAGRAM_CLIENT_ID") || "1748052449612666";
+const META_APP_SECRET = Deno.env.get("META_APP_SECRET") || Deno.env.get("INSTAGRAM_CLIENT_SECRET") || "";
+const INSTAGRAM_CONFIG_ID = Deno.env.get("INSTAGRAM_CONFIG_ID") || "1402887921834763";
 const INSTAGRAM_TOKEN_ENCRYPTION_KEY = Deno.env.get("INSTAGRAM_TOKEN_ENCRYPTION_KEY") ||
   Deno.env.get("BOOKING_TOKEN_PEPPER") || "";
-const INSTAGRAM_GRAPH_VERSION = (Deno.env.get("INSTAGRAM_GRAPH_VERSION") || "").replace(/^\/+|\/+$/g, "");
+const META_GRAPH_VERSION = (Deno.env.get("META_GRAPH_VERSION") || "v26.0").replace(/^\/+|\/+$/g, "");
 const INSTAGRAM_REDIRECT_URI = Deno.env.get("INSTAGRAM_REDIRECT_URI") ||
   `${SUPABASE_URL}/functions/v1/instagram-admin`;
 const SITE_URL = (Deno.env.get("INSTAGRAM_SITE_URL") || "https://www.beatrizrogoziz.com.br").replace(/\/$/, "");
@@ -53,12 +54,10 @@ const randomToken = (size = 32) => {
   return btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 };
 
-const graphRoot = () => INSTAGRAM_GRAPH_VERSION
-  ? `https://graph.instagram.com/${INSTAGRAM_GRAPH_VERSION}`
-  : "https://graph.instagram.com";
+const graphRoot = () => `https://graph.facebook.com/${META_GRAPH_VERSION}`;
 
 const configurationReady = () => Boolean(
-  SUPABASE_URL && SERVICE_ROLE_KEY && INSTAGRAM_CLIENT_ID && INSTAGRAM_CLIENT_SECRET &&
+  SUPABASE_URL && SERVICE_ROLE_KEY && META_APP_ID && META_APP_SECRET && INSTAGRAM_CONFIG_ID &&
   INSTAGRAM_TOKEN_ENCRYPTION_KEY && INSTAGRAM_REDIRECT_URI,
 );
 
@@ -85,43 +84,39 @@ const redirectToAdmin = (status: "connected" | "error", reason = "") => {
 };
 
 const exchangeAuthorizationCode = async (code: string) => {
-  const form = new FormData();
-  form.set("client_id", INSTAGRAM_CLIENT_ID);
-  form.set("client_secret", INSTAGRAM_CLIENT_SECRET);
-  form.set("grant_type", "authorization_code");
-  form.set("redirect_uri", INSTAGRAM_REDIRECT_URI);
-  form.set("code", code);
-  const response = await fetch("https://api.instagram.com/oauth/access_token", {
-    method: "POST",
-    body: form,
-    signal: AbortSignal.timeout(12000),
-  });
+  const endpoint = new URL(`${graphRoot()}/oauth/access_token`);
+  endpoint.searchParams.set("client_id", META_APP_ID);
+  endpoint.searchParams.set("client_secret", META_APP_SECRET);
+  endpoint.searchParams.set("redirect_uri", INSTAGRAM_REDIRECT_URI);
+  endpoint.searchParams.set("code", code);
+  const response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload?.access_token) throw new Error("Não foi possível concluir a autorização na Meta.");
   return payload;
 };
 
-const exchangeLongLivedToken = async (shortToken: string) => {
-  const endpoint = new URL(`${graphRoot()}/access_token`);
-  endpoint.searchParams.set("grant_type", "ig_exchange_token");
-  endpoint.searchParams.set("client_secret", INSTAGRAM_CLIENT_SECRET);
-  endpoint.searchParams.set("access_token", shortToken);
-  const response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload?.access_token) return { access_token: shortToken, expires_in: 3600 };
-  return payload;
-};
-
-const readProfile = async (token: string) => {
+const readBusiness = async (token: string) => {
   const endpoint = new URL(`${graphRoot()}/me`);
-  endpoint.searchParams.set("fields", "user_id,username,name,profile_picture_url");
+  endpoint.searchParams.set("fields", "client_business_id");
   endpoint.searchParams.set("access_token", token);
   const response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload?.user_id || !payload?.username) {
-    throw new Error("A Meta não retornou uma conta profissional válida.");
-  }
-  return payload;
+  if (!response.ok) throw new Error("Não foi possível identificar o portfólio empresarial autorizado.");
+  return payload?.client_business_id ? String(payload.client_business_id) : null;
+};
+
+const readAssignedAccount = async (token: string) => {
+  const endpoint = new URL(`${graphRoot()}/me/assigned_instagram_accounts`);
+  endpoint.searchParams.set("fields", "id,username,name,profile_picture_url");
+  endpoint.searchParams.set("access_token", token);
+  const response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("assigned_accounts_failed");
+  const accounts = Array.isArray(payload?.data) ? payload.data : [];
+  if (accounts.length === 0) throw new Error("no_accounts");
+  if (accounts.length > 1) throw new Error("multiple_accounts");
+  if (!accounts[0]?.id || !accounts[0]?.username) throw new Error("invalid_account");
+  return accounts[0];
 };
 
 const handleCallback = async (url: URL) => {
@@ -143,20 +138,20 @@ const handleCallback = async (url: URL) => {
   if (stateError || !savedState) return redirectToAdmin("error", "expired_state");
 
   try {
-    const shortToken = await exchangeAuthorizationCode(code);
-    const longToken = await exchangeLongLivedToken(shortToken.access_token);
-    const profile = await readProfile(longToken.access_token);
-    const encrypted = await encryptInstagramToken(longToken.access_token, INSTAGRAM_TOKEN_ENCRYPTION_KEY);
-    const expiresIn = Math.max(300, Number(longToken.expires_in || 3600));
-    const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+    const authorization = await exchangeAuthorizationCode(code);
+    const clientBusinessId = await readBusiness(authorization.access_token);
+    const profile = await readAssignedAccount(authorization.access_token);
+    const encrypted = await encryptInstagramToken(authorization.access_token, INSTAGRAM_TOKEN_ENCRYPTION_KEY);
     const { error } = await admin.from("instagram_connections").upsert({
       id: true,
-      instagram_user_id: String(profile.user_id),
+      auth_method: "unified_login",
+      client_business_id: clientBusinessId,
+      instagram_user_id: String(profile.id),
       username: String(profile.username),
       display_name: profile.name ? String(profile.name) : null,
       token_ciphertext: encrypted.ciphertext,
       token_iv: encrypted.iv,
-      token_expires_at: expiresAt,
+      token_expires_at: null,
       connected_by: savedState.admin_user_id,
       connected_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -164,8 +159,10 @@ const handleCallback = async (url: URL) => {
     if (error) throw error;
     return redirectToAdmin("connected");
   } catch (error) {
-    console.error("Falha no callback do Instagram.", error instanceof Error ? error.message : "erro desconhecido");
-    return redirectToAdmin("error", "exchange_failed");
+    const reason = error instanceof Error ? error.message : "exchange_failed";
+    console.error("Falha no callback do Instagram.", reason);
+    const safeReasons = new Set(["no_accounts", "multiple_accounts", "invalid_account", "assigned_accounts_failed"]);
+    return redirectToAdmin("error", safeReasons.has(reason) ? reason : "exchange_failed");
   }
 };
 
@@ -184,7 +181,7 @@ Deno.serve(async (request) => {
 
   if (action === "status") {
     const { data, error } = await admin.from("instagram_connections")
-      .select("instagram_user_id,username,display_name,token_expires_at,connected_at,updated_at")
+      .select("auth_method,instagram_user_id,username,display_name,token_expires_at,connected_at,updated_at")
       .eq("id", true)
       .maybeSingle();
     if (error) return json(origin, { error: "Não foi possível consultar a conexão." }, 500);
@@ -195,6 +192,7 @@ Deno.serve(async (request) => {
         id: data.instagram_user_id,
         username: data.username,
         name: data.display_name,
+        auth_method: data.auth_method,
         profile_url: `https://www.instagram.com/${encodeURIComponent(data.username)}/`,
         connected_at: data.connected_at,
         expires_at: data.token_expires_at,
@@ -215,14 +213,15 @@ Deno.serve(async (request) => {
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     });
     if (error) return json(origin, { error: "Não foi possível iniciar a autenticação." }, 500);
-    const authorize = new URL("https://www.instagram.com/oauth/authorize");
-    authorize.searchParams.set("enable_fb_login", "0");
-    authorize.searchParams.set("force_authentication", "1");
-    authorize.searchParams.set("client_id", INSTAGRAM_CLIENT_ID);
+    const authorize = new URL("https://www.facebook.com/dialog/oauth");
+    authorize.searchParams.set("client_id", META_APP_ID);
+    authorize.searchParams.set("config_id", INSTAGRAM_CONFIG_ID);
+    authorize.searchParams.set("display", "popup");
+    authorize.searchParams.set("override_default_response_type", "true");
     authorize.searchParams.set("redirect_uri", INSTAGRAM_REDIRECT_URI);
     authorize.searchParams.set("response_type", "code");
-    authorize.searchParams.set("scope", "instagram_business_basic");
     authorize.searchParams.set("state", state);
+    authorize.searchParams.set("prompt", "login");
     return json(origin, { authorization_url: authorize.toString() });
   }
 

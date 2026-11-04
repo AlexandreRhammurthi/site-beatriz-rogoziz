@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
-const [html, adminJs, supabaseConfig, adminFunction, feedFunction, cryptoHelper, migration, configToml] = await Promise.all([
+const [html, adminJs, supabaseConfig, adminFunction, feedFunction, cryptoHelper, migration, unifiedMigration, configToml] = await Promise.all([
   readFile(new URL("admin.html", root), "utf8"),
   readFile(new URL("admin.js", root), "utf8"),
   readFile(new URL("supabase-config.js", root), "utf8"),
@@ -11,6 +11,7 @@ const [html, adminJs, supabaseConfig, adminFunction, feedFunction, cryptoHelper,
   readFile(new URL("supabase/functions/instagram-feed/index.ts", root), "utf8"),
   readFile(new URL("supabase/functions/_shared/instagram-crypto.ts", root), "utf8"),
   readFile(new URL("supabase/migrations/20261103150000_instagram_admin_connection.sql", root), "utf8"),
+  readFile(new URL("supabase/migrations/20261104100000_instagram_unified_login.sql", root), "utf8"),
   readFile(new URL("supabase/config.toml", root), "utf8"),
 ]);
 
@@ -25,13 +26,18 @@ test("painel oferece gestão da conta do Instagram", () => {
   assert.match(supabaseConfig, /functions\/v1\/instagram-admin/);
 });
 
-test("OAuth exige administrador, estado descartável e escopo mínimo", () => {
+test("Unified Login exige administrador, estado descartável e configuração Meta", () => {
   assert.match(adminFunction, /getAdminUser\(request\)/);
-  assert.match(adminFunction, /instagram_business_basic/);
+  assert.match(adminFunction, /www\.facebook\.com\/dialog\/oauth/);
+  assert.match(adminFunction, /config_id/);
+  assert.match(adminFunction, /override_default_response_type/);
+  assert.match(adminFunction, /graph\.facebook\.com/);
+  assert.match(adminFunction, /assigned_instagram_accounts/);
+  assert.match(adminFunction, /client_business_id/);
+  assert.doesNotMatch(adminFunction, /instagram_business_basic/);
   assert.match(adminFunction, /instagram_oauth_states/);
   assert.match(adminFunction, /\.delete\(\)[\s\S]*\.eq\("state_hash", stateHash\)/);
-  assert.match(adminFunction, /force_authentication/);
-  assert.match(adminFunction, /hostname !== "www\.instagram\.com"|www\.instagram\.com\/oauth\/authorize/);
+  assert.match(adminFunction, /prompt", "login/);
   assert.match(configToml, /\[functions\.instagram-admin\][\s\S]*verify_jwt = false/);
 });
 
@@ -42,13 +48,17 @@ test("token fica cifrado e tabelas privadas não são expostas ao frontend", () 
   assert.match(migration, /enable row level security/);
   assert.match(migration, /revoke all on table public\.instagram_connections from anon, authenticated/);
   assert.match(migration, /revoke all on table public\.instagram_oauth_states from anon, authenticated/);
+  assert.match(unifiedMigration, /auth_method/);
+  assert.match(unifiedMigration, /unified_login/);
   assert.doesNotMatch(adminJs, /token_ciphertext|INSTAGRAM_ACCESS_TOKEN/);
   assert.doesNotMatch(supabaseConfig, /INSTAGRAM_CLIENT_SECRET|INSTAGRAM_ACCESS_TOKEN|INSTAGRAM_TOKEN_ENCRYPTION_KEY/);
 });
 
-test("feed renova a autorização e mantém fallback em caso de falha", () => {
+test("feed suporta Unified Login e mantém compatibilidade com a autorização legada", () => {
   assert.match(feedFunction, /refresh_access_token/);
   assert.match(feedFunction, /ig_refresh_token/);
+  assert.match(feedFunction, /auth_method === "unified_login"/);
+  assert.match(feedFunction, /graph\.facebook\.com/);
   assert.match(feedFunction, /instagram_connections/);
   assert.match(feedFunction, /connected: false/);
 });

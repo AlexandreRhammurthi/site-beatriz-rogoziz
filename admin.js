@@ -193,7 +193,9 @@ const renderInstagramConnection = (result) => {
       <h3>@${escapeHTML(account.username)}</h3>
       ${account.name ? `<p>${escapeHTML(account.name)}</p>` : ""}
       <p><a href="${escapeHTML(account.profile_url)}" target="_blank" rel="noopener noreferrer">Abrir perfil no Instagram</a></p>
-      <p>Conectada em ${escapeHTML(formatInstagramDate(account.connected_at))}. Autorização válida até ${escapeHTML(formatInstagramDate(account.expires_at))}; a renovação é automática.</p>
+      <p>Conectada em ${escapeHTML(formatInstagramDate(account.connected_at))}. ${account.expires_at
+        ? `Autorização válida até ${escapeHTML(formatInstagramDate(account.expires_at))}; a renovação é automática.`
+        : "Autorização sem expiração programada."}</p>
     `;
     return;
   }
