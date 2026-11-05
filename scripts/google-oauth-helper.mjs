@@ -9,6 +9,7 @@ let clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const port = 53682;
 const redirectUri = `http://localhost:${port}/callback`;
 const expectedEmail = "contato.beatrizrogoziz@gmail.com";
+const supabaseProjectRef = "exqprqsnxdyzonkjippe";
 
 if (credentialsFile) {
   const credentials = JSON.parse(await readFile(credentialsFile, "utf8"));
@@ -53,8 +54,8 @@ const saveSupabaseSecrets = (refreshToken) => new Promise((resolve, reject) => {
   const isWindows = process.platform === "win32";
   const command = isWindows ? "pwsh.exe" : "sh";
   const script = isWindows
-    ? "npx supabase secrets set ('GOOGLE_CLIENT_ID=' + $env:STUDIO_GOOGLE_CLIENT_ID) ('GOOGLE_CLIENT_SECRET=' + $env:STUDIO_GOOGLE_CLIENT_SECRET) ('GOOGLE_REFRESH_TOKEN=' + $env:STUDIO_GOOGLE_REFRESH_TOKEN)"
-    : "npx supabase secrets set \"GOOGLE_CLIENT_ID=$STUDIO_GOOGLE_CLIENT_ID\" \"GOOGLE_CLIENT_SECRET=$STUDIO_GOOGLE_CLIENT_SECRET\" \"GOOGLE_REFRESH_TOKEN=$STUDIO_GOOGLE_REFRESH_TOKEN\"";
+    ? `npx --yes supabase@latest secrets set --remote=${supabaseProjectRef} --yes ('GOOGLE_CLIENT_ID=' + $env:STUDIO_GOOGLE_CLIENT_ID) ('GOOGLE_CLIENT_SECRET=' + $env:STUDIO_GOOGLE_CLIENT_SECRET) ('GOOGLE_REFRESH_TOKEN=' + $env:STUDIO_GOOGLE_REFRESH_TOKEN)`
+    : `npx --yes supabase@latest secrets set --remote=${supabaseProjectRef} --yes \"GOOGLE_CLIENT_ID=$STUDIO_GOOGLE_CLIENT_ID\" \"GOOGLE_CLIENT_SECRET=$STUDIO_GOOGLE_CLIENT_SECRET\" \"GOOGLE_REFRESH_TOKEN=$STUDIO_GOOGLE_REFRESH_TOKEN\"`;
   const args = isWindows ? ["-NoProfile", "-NonInteractive", "-Command", script] : ["-c", script];
   const child = spawn(command, args, {
     cwd: process.cwd(),
