@@ -23,6 +23,8 @@ test("painel oferece gestão da conta do Instagram", () => {
   assert.match(adminJs, /callInstagramAdmin\("status"\)/);
   assert.match(adminJs, /callInstagramAdmin\("connect"\)/);
   assert.match(adminJs, /callInstagramAdmin\("disconnect"\)/);
+  assert.match(adminJs, /authorizationUrl\.hostname !== "www\.facebook\.com"/);
+  assert.match(adminJs, /AbortSignal\.timeout\(15000\)/);
   assert.match(supabaseConfig, /functions\/v1\/instagram-admin/);
 });
 

@@ -159,15 +159,24 @@ const callBookingApi = async (action, data = {}, authenticated = false) => {
 const callInstagramAdmin = async (action) => {
   const { data: sessionData, error: sessionError } = await client.auth.getSession();
   if (sessionError || !sessionData.session?.access_token) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
-  const response = await fetch(window.STUDIO_B_SUPABASE.instagramAdminUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: window.STUDIO_B_SUPABASE.publishableKey,
-      Authorization: `Bearer ${sessionData.session.access_token}`
-    },
-    body: JSON.stringify({ action })
-  });
+  let response;
+  try {
+    response = await fetch(window.STUDIO_B_SUPABASE.instagramAdminUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: window.STUDIO_B_SUPABASE.publishableKey,
+        Authorization: `Bearer ${sessionData.session.access_token}`
+      },
+      body: JSON.stringify({ action }),
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (error) {
+    if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+      throw new Error("A conexão com o Instagram demorou demais. Tente novamente.");
+    }
+    throw error;
+  }
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error || "Não foi possível administrar a conexão com o Instagram.");
   return payload;
@@ -1247,7 +1256,7 @@ instagramConnectButton?.addEventListener("click", async (event) => {
     const result = await callInstagramAdmin("connect");
     if (!result.authorization_url) throw new Error("A Meta não retornou o endereço de autorização.");
     const authorizationUrl = new URL(result.authorization_url);
-    if (authorizationUrl.protocol !== "https:" || authorizationUrl.hostname !== "www.instagram.com") {
+    if (authorizationUrl.protocol !== "https:" || authorizationUrl.hostname !== "www.facebook.com") {
       throw new Error("O endereço de autorização retornado é inválido.");
     }
     window.location.assign(authorizationUrl.toString());
